@@ -30,11 +30,11 @@ ext {
 
 android {
     useLibrary 'org.apache.http.legacy'
-    compileSdkVersion versions.androidCompileSdk
+    compileSdkVersion 31
 
     defaultConfig {
-        minSdkVersion versions.androidMinSdk
-        targetSdkVersion versions.androidTargetSdk
+        minSdkVersion 21
+        targetSdkVersion 31
         versionCode versions.projectVersionCode
         versionName versions.projectVersionName
         vectorDrawables.useSupportLibrary = true
@@ -103,7 +103,6 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
     implementation "com.squareup.retrofit2:converter-jackson:$versions.retrofit"
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
-
     // R2 modules
     api("com.github.codetoart:r2-shared-kotlin:$versions.r2SharedKotlin") {
         changing = true

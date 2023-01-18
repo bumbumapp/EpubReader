@@ -1,15 +1,23 @@
 package com.folioreader.ui.adapter;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ViewGroup;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
+
 import com.folioreader.ui.fragment.FolioPageFragment;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.readium.r2.shared.Link;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,12 +31,19 @@ public class FolioPageFragmentAdapter extends FragmentStatePagerAdapter {
     private List<Link> mSpineReferences;
     private String mEpubFileName;
     private String mBookId;
+     Context context;
     private ArrayList<Fragment> fragments;
     private ArrayList<Fragment.SavedState> savedStateList;
+    ArrayList<String>arrayListpositions=new ArrayList<>();
+    ArrayList<String>arrayList=new ArrayList<>();
+    int k=0;
+    String path;
 
-    public FolioPageFragmentAdapter(FragmentManager fragmentManager, List<Link> spineReferences,
+    public FolioPageFragmentAdapter(Context context,FragmentManager fragmentManager,String path,List<Link> spineReferences,
                                     String epubFileName, String bookId) {
         super(fragmentManager);
+        this.context=context;
+        this.path=path;
         this.mSpineReferences = spineReferences;
         this.mEpubFileName = epubFileName;
         this.mBookId = bookId;
@@ -55,15 +70,24 @@ public class FolioPageFragmentAdapter extends FragmentStatePagerAdapter {
         if (mSpineReferences.size() == 0 || position < 0 || position >= mSpineReferences.size())
             return null;
 
+
         Fragment fragment = fragments.get(position);
-        if (fragment == null) {
+        if (fragment == null){
             fragment = FolioPageFragment.newInstance(position,
                     mEpubFileName, mSpineReferences.get(position), mBookId);
             fragments.set(position, fragment);
         }
+
         return fragment;
     }
 
+    public ArrayList<String> getArrayList(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Gson gson = new Gson();
+        String json = prefs.getString("key", null);
+        Type type = new TypeToken<ArrayList<String>>() {}.getType();
+        return gson.fromJson(json, type);
+    }
     public ArrayList<Fragment> getFragments() {
         return fragments;
     }

@@ -18,17 +18,17 @@ package com.folioreader.ui.activity
 import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
+import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.preference.PreferenceManager
+import android.provider.OpenableColumns
 import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
@@ -44,11 +44,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.folioreader.Config
-import com.folioreader.Constants
+import com.folioreader.*
 import com.folioreader.Constants.*
-import com.folioreader.FolioReader
-import com.folioreader.R
 import com.folioreader.model.DisplayUnit
 import com.folioreader.model.HighlightImpl
 import com.folioreader.model.event.MediaOverlayPlayPauseEvent
@@ -65,6 +62,8 @@ import com.folioreader.ui.view.MediaControllerCallback
 import com.folioreader.util.AppUtil
 import com.folioreader.util.FileUtil
 import com.folioreader.util.UiUtil
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import org.greenrobot.eventbus.EventBus
 import org.readium.r2.shared.Link
 import org.readium.r2.shared.Publication
@@ -73,18 +72,23 @@ import org.readium.r2.streamer.parser.EpubParser
 import org.readium.r2.streamer.parser.PubBox
 import org.readium.r2.streamer.server.Server
 import java.lang.ref.WeakReference
+import kotlin.collections.ArrayList
+
+
 
 class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControllerCallback,
     View.OnSystemUiVisibilityChangeListener {
 
     private var bookFileName: String? = null
-
     private var mFolioPageViewPager: DirectionalViewpager? = null
     private var actionBar: ActionBar? = null
     private var appBarLayout: FolioAppBarLayout? = null
     private var toolbar: Toolbar? = null
     private var distractionFreeMode: Boolean = false
     private var handler: Handler? = null
+    var arrayListtitle = arrayListOf<String>()
+    var arrayListpath = arrayListOf<String?>()
+    var arrayListposition= arrayListOf<String?>()
 
     private var currentChapterIndex: Int = 0
     private var mFolioPageFragmentAdapter: FolioPageFragmentAdapter? = null
@@ -100,7 +104,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     private var mBookId: String? = null
     private var mEpubFilePath: String? = null
     private var mEpubSourceType: EpubSourceType? = null
-    private var mEpubRawId = 0
+    private var mEpubRawId = 7
     private var mediaControllerFragment: MediaControllerFragment? = null
     private var direction: Config.Direction = Config.Direction.VERTICAL
     private var portNumber: Int = Constants.DEFAULT_PORT_NUMBER
@@ -192,7 +196,38 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         CONTENT_HIGHLIGHT(77),
         SEARCH(101)
     }
+    private fun getFilePathForN(uri: android.net.Uri, context: android.content.Context): kotlin.String?{
+        val returnUri = uri
+        val returnCursor = context.contentResolver.query(returnUri, null, null, null, null)
+        val nameIndex: Int = returnCursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        val sizeIndex: Int = returnCursor!!.getColumnIndex(OpenableColumns.SIZE)
+        returnCursor!!.moveToFirst()
+        val name: kotlin.String = (returnCursor!!.getString(nameIndex))
+        val size: kotlin.String = (java.lang.Long.toString(returnCursor!!.getLong(sizeIndex)))
+        val file: java.io.File = java.io.File(context.filesDir, name)
+        try {
+            val inputStream: java.io.InputStream? = context.contentResolver.openInputStream(uri)
+            val outputStream: java.io.FileOutputStream = java.io.FileOutputStream(file)
+            var  read = 0
+            val maxBufferSize: Int = 1 * 1024 * 1024
+            val bytesAvailable: Int = inputStream!!.available()
 
+            //int bufferSize = 1024;
+            val bufferSize: Int = java.lang.Math.min(bytesAvailable, maxBufferSize)
+            val  buffers: kotlin.ByteArray = kotlin.ByteArray(bufferSize)
+            while ((inputStream!!.read(buffers).also { read = it }) != -1){
+                outputStream.write(buffers, 0, read)
+            }
+            android.util.Log.e("File Size", "Size " + file.length())
+            inputStream!!.close()
+            outputStream.close()
+            android.util.Log.e("File Path", "Path " + file.path)
+            android.util.Log.e("File Size", "Size " + file.length())
+        }catch (  e: java.lang.Exception){
+            android.util.Log.e("Exception", (e.message)!!)
+        }
+        return file.path
+    }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -277,6 +312,11 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         } else {
             mEpubFilePath = intent.extras!!
                 .getString(FolioActivity.INTENT_EPUB_SOURCE_PATH)
+        }
+
+        arrayListpath=getArrayList()
+        for (i in arrayListpath.indices) {
+            arrayListtitle.add(arrayListpath.get(i)!!.substring(arrayListpath!!.get(i)!!.lastIndexOf("/") + 1))
         }
 
         initActionBar()
@@ -481,7 +521,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
                 cbzParser.parse(path!!, "")
             }
             else -> {
-                null
+               null
             }
         }
 
@@ -508,6 +548,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         val publication = pubBox!!.publication
         spine = publication.readingOrder
         title = publication.metadata.title
+        Log.d("TAG","SPIN"+spine);
+
 
         if (mBookId == null) {
             if (!publication.metadata.identifier.isEmpty()) {
@@ -535,6 +577,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         configFolio()
     }
 
+
     override fun getStreamerUrl(): String {
 
         if (streamerUri == null) {
@@ -553,8 +596,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         direction = newDirection
 
         mFolioPageViewPager!!.setDirection(newDirection)
-        mFolioPageFragmentAdapter = FolioPageFragmentAdapter(
-            supportFragmentManager,
+        mFolioPageFragmentAdapter = FolioPageFragmentAdapter(applicationContext,
+            supportFragmentManager,mEpubFilePath,
             spine, bookFileName, mBookId
         )
         mFolioPageViewPager!!.adapter = mFolioPageFragmentAdapter
@@ -830,6 +873,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     override fun onDestroy() {
         super.onDestroy()
 
+
+
         if (outState != null)
             outState!!.putSerializable(BUNDLE_READ_LOCATOR_CONFIG_CHANGE, lastReadLocator)
 
@@ -845,10 +890,18 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             FolioReader.get().retrofit = null
             FolioReader.get().r2StreamerApi = null
         }
+
     }
 
     override fun getCurrentChapterIndex(): Int {
         return currentChapterIndex
+    }
+    fun getArrayList(): java.util.ArrayList<String?> {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val gson = Gson()
+        val json = prefs.getString("key", null)
+        val type = object : TypeToken<java.util.ArrayList<String?>?>() {}.type
+        return gson.fromJson<java.util.ArrayList<String?>>(json, type)
     }
 
     private fun configFolio() {
@@ -870,10 +923,13 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
                 currentChapterIndex = position
             }
 
+
             override fun onPageScrollStateChanged(state: Int) {
 
                 if (state == DirectionalViewpager.SCROLL_STATE_IDLE) {
-                    val position = mFolioPageViewPager!!.currentItem
+                    var position:Int=mFolioPageViewPager!!.currentItem
+
+
                     Log.v(
                         LOG_TAG, "-> onPageScrollStateChanged -> DirectionalViewpager -> " +
                                 "position = " + position
@@ -897,8 +953,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         })
 
         mFolioPageViewPager!!.setDirection(direction)
-        mFolioPageFragmentAdapter = FolioPageFragmentAdapter(
-            supportFragmentManager,
+        mFolioPageFragmentAdapter = FolioPageFragmentAdapter(applicationContext,
+            supportFragmentManager,mEpubFilePath,
             spine, bookFileName, mBookId
         )
         mFolioPageViewPager!!.adapter = mFolioPageFragmentAdapter

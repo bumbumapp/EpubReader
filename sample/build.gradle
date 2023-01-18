@@ -5,12 +5,12 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
 
-    compileSdkVersion versions.androidCompileSdk
+    compileSdkVersion 31
 
     defaultConfig {
-        applicationId "com.folioreader.android.sample"
+        applicationId "com.bumbumapps.epubreaderpro"
         minSdkVersion versions.androidMinSdk
-        targetSdkVersion versions.androidTargetSdk
+        targetSdkVersion 31
         versionCode versions.projectVersionCode
         versionName versions.projectVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -52,17 +52,18 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$versions.appcompat"
     implementation "androidx.constraintlayout:constraintlayout:$versions.constraintLayout"
+    implementation 'com.google.android.material:material:1.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation "androidx.test.ext:junit:1.1.1"
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-
     implementation project(':folioreader')
     //implementation "com.folioreader:folioreader:$versions.folioreaderSdk"
-
+    implementation "com.google.code.gson:gson:2.8.5"
     implementation "com.fasterxml.jackson.core:jackson-core:$versions.jackson"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson"
     implementation "com.fasterxml.jackson.core:jackson-databind:$versions.jackson"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$versions.jackson"
+    implementation 'com.github.bumptech.glide:glide:4.13.2'
 
     //progressBar error solve
     configurations.matching { it.name == '_internal_aapt2_binary' }.all { config ->
