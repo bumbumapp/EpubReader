@@ -15,12 +15,16 @@ import androidx.fragment.app.Fragment
 import com.folioreader.Config
 import com.folioreader.Constants
 import com.folioreader.R
+import com.folioreader.model.Timers
 import com.folioreader.model.event.ReloadDataEvent
 import com.folioreader.ui.activity.FolioActivity
 import com.folioreader.ui.activity.FolioActivityCallback
 import com.folioreader.ui.fragment.MediaControllerFragment
 import com.folioreader.util.AppUtil
 import com.folioreader.util.UiUtil
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.InterstitialAd
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -41,7 +45,7 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     private lateinit var config: Config
     private var isNightMode = false
     private lateinit var activityCallback: FolioActivityCallback
-
+    private lateinit var mInterstitialAd: InterstitialAd
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.view_config, container)
     }
@@ -63,8 +67,14 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
         config = AppUtil.getSavedConfig(activity)!!
         initViews()
+        loadInterstitialAds()
     }
-
+    private fun loadInterstitialAds() {
+        val adRequest = AdRequest.Builder().build()
+        mInterstitialAd = InterstitialAd(requireContext())
+        mInterstitialAd.adUnitId = getString(R.string.interstitial_ads_id)
+        mInterstitialAd.loadAd(adRequest)
+    }
     override fun onDestroy() {
         super.onDestroy()
         view?.viewTreeObserver?.addOnGlobalLayoutListener(null)
@@ -171,6 +181,27 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun selectFont(selectedFont: Int, isReloadNeeded: Boolean) {
+        if (Constants.TIMER_FINISHED) {
+            if (mInterstitialAd.isLoaded) {
+                mInterstitialAd.show()
+                mInterstitialAd.adListener = object : AdListener() {
+                    override fun onAdClosed() {
+                        super.onAdClosed()
+                        selectedFont(selectedFont,isReloadNeeded)
+                        loadInterstitialAds()
+                        Constants.TIMER_FINISHED =false;
+                        Timers.timer().start()
+                    }
+                }
+            } else {
+                selectedFont(selectedFont,isReloadNeeded)
+            }
+        } else {
+            selectedFont(selectedFont,isReloadNeeded)
+        }
+
+    }
+    private fun selectedFont(selectedFont: Int, isReloadNeeded: Boolean){
         when (selectedFont) {
             Constants.FONT_ANDADA -> setSelectedFont(true, false, false, false)
             Constants.FONT_LATO -> setSelectedFont(false, true, false, false)

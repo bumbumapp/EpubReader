@@ -18,11 +18,13 @@ package com.folioreader.ui.activity
 import android.Manifest
 import android.app.Activity
 import android.app.ActivityManager
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
-import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -44,10 +46,14 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.folioreader.*
+import com.folioreader.Config
+import com.folioreader.Constants
 import com.folioreader.Constants.*
+import com.folioreader.FolioReader
+import com.folioreader.R
 import com.folioreader.model.DisplayUnit
 import com.folioreader.model.HighlightImpl
+import com.folioreader.model.Timers
 import com.folioreader.model.event.MediaOverlayPlayPauseEvent
 import com.folioreader.model.locators.ReadLocator
 import com.folioreader.model.locators.SearchLocator
@@ -62,6 +68,7 @@ import com.folioreader.ui.view.MediaControllerCallback
 import com.folioreader.util.AppUtil
 import com.folioreader.util.FileUtil
 import com.folioreader.util.UiUtil
+import com.google.android.gms.ads.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.greenrobot.eventbus.EventBus
@@ -72,8 +79,6 @@ import org.readium.r2.streamer.parser.EpubParser
 import org.readium.r2.streamer.parser.PubBox
 import org.readium.r2.streamer.server.Server
 import java.lang.ref.WeakReference
-import kotlin.collections.ArrayList
-
 
 
 class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControllerCallback,
@@ -89,6 +94,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     var arrayListtitle = arrayListOf<String>()
     var arrayListpath = arrayListOf<String?>()
     var arrayListposition= arrayListOf<String?>()
+    private lateinit var mInterstitialAd:InterstitialAd
 
     private var currentChapterIndex: Int = 0
     private var mFolioPageFragmentAdapter: FolioPageFragmentAdapter? = null
@@ -196,6 +202,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         CONTENT_HIGHLIGHT(77),
         SEARCH(101)
     }
+
+
     private fun getFilePathForN(uri: android.net.Uri, context: android.content.Context): kotlin.String?{
         val returnUri = uri
         val returnCursor = context.contentResolver.query(returnUri, null, null, null, null)
@@ -335,8 +343,16 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         } else {
             setupBook()
         }
-    }
 
+        loadInterstitialAds()
+
+    }
+    private fun loadInterstitialAds() {
+        val adRequest = AdRequest.Builder().build()
+        mInterstitialAd = InterstitialAd(this)
+        mInterstitialAd.adUnitId = getString(R.string.interstitial_ads_id)
+        mInterstitialAd.loadAd(adRequest)
+    }
     private fun initActionBar() {
 
         appBarLayout = findViewById(R.id.appBarLayout)
@@ -418,8 +434,28 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         val itemId = item.itemId
 
         if (itemId == android.R.id.home) {
-            Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
-            startContentHighlightActivity()
+
+            if (TIMER_FINISHED) {
+                if (mInterstitialAd.isLoaded) {
+                    mInterstitialAd.show()
+                    mInterstitialAd.adListener = object : AdListener() {
+                        override fun onAdClosed() {
+                            super.onAdClosed()
+                            Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
+                            startContentHighlightActivity()
+                            TIMER_FINISHED=false
+                            Timers.timer().start()
+                            loadInterstitialAds()
+                        }
+                    }
+                } else {
+                    Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
+                    startContentHighlightActivity()
+                }
+            } else {
+                Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
+                startContentHighlightActivity()
+            }
             return true
 
         } else if (itemId == R.id.itemSearch) {
@@ -435,8 +471,25 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             return true
 
         } else if (itemId == R.id.itemConfig) {
-            Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-            showConfigBottomSheetDialogFragment()
+            if (TIMER_FINISHED) {
+                if (mInterstitialAd.isLoaded) {
+                    mInterstitialAd.show()
+                    mInterstitialAd.adListener = object : AdListener() {
+                        override fun onAdClosed() {
+                            super.onAdClosed()
+                            Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                            showConfigBottomSheetDialogFragment()
+                            loadInterstitialAds()
+                        }
+                    }
+                } else {
+                    Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                    showConfigBottomSheetDialogFragment()
+                }
+            } else {
+                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                showConfigBottomSheetDialogFragment()
+            }
             return true
 
         } else if (itemId == R.id.itemTts) {

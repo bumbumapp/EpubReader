@@ -30,7 +30,8 @@ public class Constants {
     public static final int WRITE_EXTERNAL_STORAGE_REQUEST = 102;
     public static final String CHAPTER_ID = "id";
     public static final String HREF = "href";
-
+    public static boolean TIMER_FINISHED=false;
+    public static int TIMES=5;
     public static String[] getWriteExternalStoragePerms() {
         return new String[]{
                 Manifest.permission.WRITE_EXTERNAL_STORAGE

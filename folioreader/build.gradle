@@ -117,5 +117,8 @@ dependencies {
 
     // Lifecycle
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+
+    implementation 'com.google.android.gms:play-services-ads:19.2.0'
+
 }
 apply from: '../folioreader/bintray/bintrayv1.gradle'

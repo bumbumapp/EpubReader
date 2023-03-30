@@ -15,7 +15,9 @@
  */
 package com.folioreader.android.sample;
 
-import static android.os.Build.VERSION.SDK_INT;
+
+import static com.folioreader.Constants.TIMER_FINISHED;
+import static com.folioreader.Constants.TIMES;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -40,6 +42,8 @@ import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -56,11 +60,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.folioreader.Config;
 import com.folioreader.FolioReader;
 import com.folioreader.model.HighLight;
+import com.folioreader.model.Timers;
 import com.folioreader.model.locators.ReadLocator;
 import com.folioreader.ui.base.OnSaveHighlight;
 import com.folioreader.util.AppUtil;
 import com.folioreader.util.OnHighlightListener;
 import com.folioreader.util.ReadLocatorListener;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -83,10 +95,12 @@ public class HomeActivity extends AppCompatActivity
 
     private static final String LOG_TAG = HomeActivity.class.getSimpleName();
     private FolioReader folioReader;
+    LinearLayout opentoEmpty;
     RecyclerView books;
     ArrayList<String>arrayList=new ArrayList<>();
     ArrayList<String>arrayListmodified=new ArrayList<>();
     ArrayList<String>arrayListtitle=new ArrayList<>();
+    private InterstitialAd mInterstitialAd;
 
 
 
@@ -144,20 +158,23 @@ public class HomeActivity extends AppCompatActivity
             getToFile2(u);
 
         }
-
+        opentoEmpty=findViewById(R.id.toDoEmptyView);
+        if (getArrayList()!=null){
+            opentoEmpty.setVisibility(View.GONE);
+        }
+        if (getArrayList()==null){
+            opentoEmpty.setVisibility(View.VISIBLE);
+        }
         findViewById(R.id.btn_raw).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                   openfiles();
-
-
-
+                openfiles();
             }
         });
 
-
-
+        loadBanners();
+        loadInterstitialAds();
+        Timers.timer().start();
     }
 
     private void openfiles() {
@@ -211,6 +228,7 @@ public class HomeActivity extends AppCompatActivity
         switch (requestCode) {
             case 101:
                 if (resultCode == RESULT_OK) {
+
                     Uri uri=data.getData();
                     String path=getDriveFilePath(uri,this);
                     String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
@@ -255,7 +273,12 @@ public class HomeActivity extends AppCompatActivity
 
 
 
-
+                    if (getArrayList()!=null){
+                        opentoEmpty.setVisibility(View.GONE);
+                    }
+                    if (getArrayList()==null){
+                        opentoEmpty.setVisibility(View.VISIBLE);
+                    }
 
 
                 }
@@ -294,6 +317,17 @@ public class HomeActivity extends AppCompatActivity
         Type type = new TypeToken<ArrayList<String>>() {}.getType();
         return gson.fromJson(json, type);
     }
+    private void loadBanners() {
+
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+        AdView mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+    }
 
     private void getToFile2(Uri uri) {
 
@@ -306,19 +340,16 @@ public class HomeActivity extends AppCompatActivity
             arrayListmodified=getArrayListmodified();
             for (int i=0;i<arrayList.size();i++){
                 arrayListtitle.add(arrayList.get(i).substring(arrayList.get(i).lastIndexOf("/")+1));
-                Log.d("Tag","idhdfj"+i);
             }
             if (!arrayListtitle.contains(path.substring(path.lastIndexOf("/")+1))){
                 arrayList.add(path);
                 arrayListmodified.add(currentTime);
-                Log.d("Tag","idhdvj"+arrayList);
                 saveArrayList(arrayList);
                 saveArrayListLink(arrayListmodified);
             }
             else {
                 currentTime= new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());;
                 int i=arrayListtitle.indexOf(path.substring(path.lastIndexOf("/")+1));
-                Log.d("Tag","idhdj"+i);
                 arrayListmodified.set(i, currentTime);
                 saveArrayList(arrayList);
                 saveArrayListLink(arrayListmodified);
@@ -358,27 +389,59 @@ public class HomeActivity extends AppCompatActivity
     private void setadapter(ArrayList<String> arrayList, ArrayList<String> arrayListmodified) {
         EpubAdabter epubAdabter=new EpubAdabter(this,arrayList,arrayListmodified, new ClickListener() {
             @Override
-            public void onClick(int positon) {
-                        ArrayList<String> arrayList1=new ArrayList();
-                         ArrayList<String> arrayListmodiffed1=new ArrayList();
-                        arrayList1=getArrayList();
-                        arrayListmodiffed1=getArrayListmodified();
-                String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
-                        arrayListmodiffed1.set(positon,currentTime);
-                        saveArrayListLink(arrayListmodiffed1);
-                        setadapter(arrayList1,arrayListmodiffed1);
-                        Config config = AppUtil.getSavedConfig(getApplicationContext());
-                        if (config == null)
-                            config = new Config();
-                        config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
-                        folioReader.setConfig(config, true)
-                                .openBook(arrayList1.get(positon));
+            public void onClick(final int positon) {
+               if (TIMER_FINISHED){
+                    if (mInterstitialAd.isLoaded()){
+                        mInterstitialAd.show();
+                        mInterstitialAd.setAdListener(new AdListener(){
+                            @Override
+                            public void onAdClosed() {
+                                Timers.timer().start();
+                                TIMER_FINISHED=false;
+                                loadInterstitialAds();
+                                onClickNewItem(positon);
+                                super.onAdClosed();
+
+
+                            }
+                        });
+                    }
+                    else {
+                       onClickNewItem(positon);
+                    }
+               }else {
+                   onClickNewItem(positon);
+               }
+
 
             }
         });
         books.setAdapter(epubAdabter);
     }
+    private void loadInterstitialAds() {
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ads_id));
+        mInterstitialAd.loadAd(adRequest);
 
+    }
+
+    private void onClickNewItem(int positon){
+       ArrayList<String> arrayList1=new ArrayList();
+       ArrayList<String> arrayListmodiffed1=new ArrayList();
+       arrayList1=getArrayList();
+       arrayListmodiffed1=getArrayListmodified();
+       String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
+       arrayListmodiffed1.set(positon,currentTime);
+       saveArrayListLink(arrayListmodiffed1);
+       setadapter(arrayList1,arrayListmodiffed1);
+       Config config = AppUtil.getSavedConfig(getApplicationContext());
+       if (config == null)
+           config = new Config();
+       config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
+       folioReader.setConfig(config, true)
+               .openBook(arrayList1.get(positon));
+   }
     private static String getDriveFilePath(Uri uri, Context context) {
         Uri returnUri = uri;
         Cursor returnCursor = context.getContentResolver().query(returnUri, null, null, null, null);

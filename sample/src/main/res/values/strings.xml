@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name" translatable="false">Epub Reader pro</string>
+    <string name="banner_id">ca-app-pub-8444865753152507/9568937442</string>
+    <string name="interstitial_ads_id">ca-app-pub-8444865753152507/5438120748</string>
+    <string name="admob_id">ca-app-pub-8444865753152507~1039447404</string>
 </resources>
