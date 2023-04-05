@@ -4,8 +4,8 @@ versions.folioreaderSdk = "0.5.4"
 versions.r2SharedKotlin = "1.0.4-2"
 versions.r2StreamerKotlin = "1.0.4-2"
 
-versions.projectVersionCode = 4
-versions.projectVersionName = "1.1.2"
+versions.projectVersionCode = 5
+versions.projectVersionName = "1.2.1"
 
 versions.androidMinSdk = 21
 versions.androidCompileSdk = 28
