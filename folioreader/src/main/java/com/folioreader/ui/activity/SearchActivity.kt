@@ -127,7 +127,7 @@ class SearchActivity : AppCompatActivity(), OnItemClickListener {
         }
 
         spineSize = intent.getIntExtra(BUNDLE_SPINE_SIZE, 0)
-        searchUri = intent.getParcelableExtra(BUNDLE_SEARCH_URI)
+        searchUri = intent.getParcelableExtra(BUNDLE_SEARCH_URI)!!
 
         searchAdapter = SearchAdapter(this)
         searchAdapter.onItemClickListener = this
@@ -155,10 +155,11 @@ class SearchActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
         Log.v(LOG_TAG, "-> onNewIntent")
 
         if (intent.hasExtra(BUNDLE_SEARCH_URI)) {
-            searchUri = intent.getParcelableExtra(BUNDLE_SEARCH_URI)
+            searchUri = intent.getParcelableExtra(BUNDLE_SEARCH_URI)!!
         } else {
             intent.putExtra(BUNDLE_SEARCH_URI, searchUri)
             intent.putExtra(BUNDLE_SPINE_SIZE, spineSize)
@@ -173,13 +174,13 @@ class SearchActivity : AppCompatActivity(), OnItemClickListener {
     private fun handleSearch() {
         Log.v(LOG_TAG, "-> handleSearch")
 
-        val query: String = intent.getStringExtra(SearchManager.QUERY)
+        val query: String? = intent.getStringExtra(SearchManager.QUERY)
         val newDataBundle = Bundle()
         newDataBundle.putString(ListViewType.KEY, ListViewType.PAGINATION_IN_PROGRESS_VIEW.toString())
         newDataBundle.putParcelableArrayList("DATA", ArrayList<SearchLocator>())
         searchViewModel.liveAdapterDataBundle.value = newDataBundle
 
-        searchViewModel.search(spineSize, query)
+        query?.let { searchViewModel.search(spineSize, it) }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -270,11 +271,11 @@ class SearchActivity : AppCompatActivity(), OnItemClickListener {
 
         itemSearch.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
 
-            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+            override fun onMenuItemActionExpand(item: MenuItem): Boolean {
                 return true
             }
 
-            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+            override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                 Log.v(LOG_TAG, "-> onMenuItemActionCollapse")
                 navigateBack()
                 return false
@@ -288,7 +289,7 @@ class SearchActivity : AppCompatActivity(), OnItemClickListener {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         val itemId = item?.itemId
 

@@ -69,10 +69,13 @@ import com.folioreader.util.ReadLocatorListener;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -391,18 +394,16 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onClick(final int positon) {
                if (TIMER_FINISHED){
-                    if (mInterstitialAd.isLoaded()){
-                        mInterstitialAd.show();
-                        mInterstitialAd.setAdListener(new AdListener(){
+                    if (mInterstitialAd != null){
+                        mInterstitialAd.show(HomeActivity.this);
+                        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                             @Override
-                            public void onAdClosed() {
+                            public void onAdDismissedFullScreenContent() {
                                 Timers.timer().start();
                                 TIMER_FINISHED=false;
                                 loadInterstitialAds();
                                 onClickNewItem(positon);
-                                super.onAdClosed();
-
-
+                                super.onAdDismissedFullScreenContent();
                             }
                         });
                     }
@@ -420,9 +421,17 @@ public class HomeActivity extends AppCompatActivity
     }
     private void loadInterstitialAds() {
         AdRequest adRequest = new AdRequest.Builder().build();
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ads_id));
-        mInterstitialAd.loadAd(adRequest);
+        InterstitialAd.load(this, getString(R.string.interstitial_ads_id), adRequest, new InterstitialAdLoadCallback() {
+            @Override
+            public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                mInterstitialAd = interstitialAd;
+            }
+
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                mInterstitialAd = null;
+            }
+        });
 
     }
 

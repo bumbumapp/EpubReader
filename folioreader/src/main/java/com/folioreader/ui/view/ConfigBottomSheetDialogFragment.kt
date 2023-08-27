@@ -24,7 +24,10 @@ import com.folioreader.util.AppUtil
 import com.folioreader.util.UiUtil
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.InterstitialAd
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -45,7 +48,7 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     private lateinit var config: Config
     private var isNightMode = false
     private lateinit var activityCallback: FolioActivityCallback
-    private lateinit var mInterstitialAd: InterstitialAd
+    private  var mInterstitialAd: InterstitialAd?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.view_config, container)
     }
@@ -71,9 +74,16 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
     private fun loadInterstitialAds() {
         val adRequest = AdRequest.Builder().build()
-        mInterstitialAd = InterstitialAd(requireContext())
-        mInterstitialAd.adUnitId = getString(R.string.interstitial_ads_id)
-        mInterstitialAd.loadAd(adRequest)
+        InterstitialAd.load(requireContext(),getString(R.string.interstitial_ads_id),adRequest,object :
+            InterstitialAdLoadCallback(){
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                mInterstitialAd = interstitialAd;
+            }
+
+            override fun onAdFailedToLoad(p0: LoadAdError) {
+                mInterstitialAd = null
+            }
+        })
     }
     override fun onDestroy() {
         super.onDestroy()
@@ -182,11 +192,11 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
     private fun selectFont(selectedFont: Int, isReloadNeeded: Boolean) {
         if (Constants.TIMER_FINISHED) {
-            if (mInterstitialAd.isLoaded) {
-                mInterstitialAd.show()
-                mInterstitialAd.adListener = object : AdListener() {
-                    override fun onAdClosed() {
-                        super.onAdClosed()
+            if (mInterstitialAd != null) {
+                mInterstitialAd?.show(requireActivity())
+                mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        super.onAdDismissedFullScreenContent()
                         selectedFont(selectedFont,isReloadNeeded)
                         loadInterstitialAds()
                         Constants.TIMER_FINISHED =false;

@@ -1,6 +1,7 @@
 package com.folioreader;
 
 import android.Manifest;
+import android.os.Build;
 
 /**
  * Created by mobisys on 10/4/2016.
@@ -32,9 +33,12 @@ public class Constants {
     public static final String HREF = "href";
     public static boolean TIMER_FINISHED=false;
     public static int TIMES=5;
-    public static String[] getWriteExternalStoragePerms() {
-        return new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-        };
+    public static String getWriteExternalStoragePerms() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            return Manifest.permission.READ_MEDIA_IMAGES;
+
+        }else {
+            return Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        }
     }
 }

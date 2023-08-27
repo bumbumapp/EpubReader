@@ -5,12 +5,12 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
 
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.bumbumapps.epubreaderpro"
         minSdkVersion versions.androidMinSdk
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode versions.projectVersionCode
         versionName versions.projectVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -22,8 +22,12 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
 
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     dexOptions {
         javaMaxHeapSize "4G"
     }
@@ -66,14 +70,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.13.2'
     implementation "com.airbnb.android:lottie:3.3.0"
 
-    //progressBar error solve
-    configurations.matching { it.name == '_internal_aapt2_binary' }.all { config ->
-        config.resolutionStrategy.eachDependency { details ->
-            details.useVersion("3.3.2-5309881")
-        }
-    }
+    implementation 'androidx.work:work-runtime:2.7.1'
 
-    //ads
-
-    implementation 'com.google.android.gms:play-services-ads:19.2.0'
+    implementation 'com.google.android.gms:play-services-ads:20.2.0'
 }

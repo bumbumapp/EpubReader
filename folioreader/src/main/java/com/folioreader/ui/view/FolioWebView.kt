@@ -156,13 +156,13 @@ class FolioWebView : WebView {
 
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
-        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
 
             if (!webViewPager.isScrolling) {
@@ -171,7 +171,7 @@ class FolioWebView : WebView {
                 //Log.d(LOG_TAG, "-> onFling -> completing scroll");
                 uiHandler.postDelayed({
                     // Delayed to avoid inconsistency of scrolling in WebView
-                    scrollTo(getScrollXPixelsForPage(webViewPager!!.currentItem), 0)
+                    scrollTo(getScrollXPixelsForPage(webViewPager.currentItem), 0)
                 }, 100)
             }
 
@@ -179,7 +179,7 @@ class FolioWebView : WebView {
             return true
         }
 
-        override fun onDown(event: MotionEvent?): Boolean {
+        override fun onDown(event: MotionEvent): Boolean {
             //Log.v(LOG_TAG, "-> onDown -> " + event.toString());
 
             eventActionDown = MotionEvent.obtain(event)
@@ -198,7 +198,7 @@ class FolioWebView : WebView {
             uiHandler.post { popupWindow.dismiss() }
         }
         selectionRect = Rect()
-        uiHandler.removeCallbacks(isScrollingRunnable)
+        isScrollingRunnable?.let { uiHandler.removeCallbacks(it) }
         isScrollingCheckDuration = 0
         return wasShowing
     }
@@ -212,13 +212,13 @@ class FolioWebView : WebView {
 
     private inner class VerticalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             //Log.v(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
-        override fun onFling(e1: MotionEvent?, e2: MotionEvent?, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             //Log.v(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
             lastScrollType = LastScrollType.USER
             return false
@@ -678,7 +678,7 @@ class FolioWebView : WebView {
             Log.i(LOG_TAG, "-> currentSelectionRect doesn't intersects viewportRect")
             uiHandler.post {
                 popupWindow.dismiss()
-                uiHandler.removeCallbacks(isScrollingRunnable)
+                isScrollingRunnable?.let { uiHandler.removeCallbacks(it) }
             }
             return
         }
@@ -770,7 +770,7 @@ class FolioWebView : WebView {
         oldScrollY = scrollY
 
         isScrollingRunnable = Runnable {
-            uiHandler.removeCallbacks(isScrollingRunnable)
+            isScrollingRunnable?.let { uiHandler.removeCallbacks(it) }
             val currentScrollX = scrollX
             val currentScrollY = scrollY
             val inTouchMode = lastTouchAction == MotionEvent.ACTION_DOWN ||
@@ -791,13 +791,13 @@ class FolioWebView : WebView {
                 oldScrollY = currentScrollY
                 isScrollingCheckDuration += IS_SCROLLING_CHECK_TIMER
                 if (isScrollingCheckDuration < IS_SCROLLING_CHECK_MAX_DURATION && !destroyed)
-                    uiHandler.postDelayed(isScrollingRunnable, IS_SCROLLING_CHECK_TIMER.toLong())
+                    isScrollingRunnable?.let { uiHandler.postDelayed(it, IS_SCROLLING_CHECK_TIMER.toLong()) }
             }
         }
 
-        uiHandler.removeCallbacks(isScrollingRunnable)
+        uiHandler.removeCallbacks(isScrollingRunnable!!)
         isScrollingCheckDuration = 0
         if (!destroyed)
-            uiHandler.postDelayed(isScrollingRunnable, IS_SCROLLING_CHECK_TIMER.toLong())
+            uiHandler.postDelayed(isScrollingRunnable!!, IS_SCROLLING_CHECK_TIMER.toLong())
     }
 }

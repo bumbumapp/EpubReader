@@ -69,6 +69,8 @@ import com.folioreader.util.AppUtil
 import com.folioreader.util.FileUtil
 import com.folioreader.util.UiUtil
 import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.greenrobot.eventbus.EventBus
@@ -94,7 +96,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     var arrayListtitle = arrayListOf<String>()
     var arrayListpath = arrayListOf<String?>()
     var arrayListposition= arrayListOf<String?>()
-    private lateinit var mInterstitialAd:InterstitialAd
+    private  var mInterstitialAd: InterstitialAd? =null
 
     private var currentChapterIndex: Int = 0
     private var mFolioPageFragmentAdapter: FolioPageFragmentAdapter? = null
@@ -332,12 +334,12 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
         if (ContextCompat.checkSelfPermission(
                 this@FolioActivity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                getWriteExternalStoragePerms()
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
                 this@FolioActivity,
-                Constants.getWriteExternalStoragePerms(),
+                arrayOf(getWriteExternalStoragePerms()),
                 Constants.WRITE_EXTERNAL_STORAGE_REQUEST
             )
         } else {
@@ -349,9 +351,15 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     }
     private fun loadInterstitialAds() {
         val adRequest = AdRequest.Builder().build()
-        mInterstitialAd = InterstitialAd(this)
-        mInterstitialAd.adUnitId = getString(R.string.interstitial_ads_id)
-        mInterstitialAd.loadAd(adRequest)
+        InterstitialAd.load(this,getString(R.string.interstitial_ads_id),adRequest,object :InterstitialAdLoadCallback(){
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                mInterstitialAd = interstitialAd;
+            }
+
+            override fun onAdFailedToLoad(p0: LoadAdError) {
+                mInterstitialAd = null
+            }
+        })
     }
     private fun initActionBar() {
 
@@ -433,72 +441,77 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
         val itemId = item.itemId
 
-        if (itemId == android.R.id.home) {
+        when (itemId) {
+            android.R.id.home -> {
 
-            if (TIMER_FINISHED) {
-                if (mInterstitialAd.isLoaded) {
-                    mInterstitialAd.show()
-                    mInterstitialAd.adListener = object : AdListener() {
-                        override fun onAdClosed() {
-                            super.onAdClosed()
-                            Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
-                            startContentHighlightActivity()
-                            TIMER_FINISHED=false
-                            Timers.timer().start()
-                            loadInterstitialAds()
+                if (TIMER_FINISHED) {
+                    if (mInterstitialAd != null) {
+                        mInterstitialAd?.show(this@FolioActivity)
+                        mInterstitialAd?.fullScreenContentCallback = object :FullScreenContentCallback(){
+                            override fun onAdDismissedFullScreenContent() {
+                                super.onAdDismissedFullScreenContent()
+                                Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
+                                startContentHighlightActivity()
+                                TIMER_FINISHED=false
+                                Timers.timer().start()
+                                loadInterstitialAds()
+                            }
                         }
+                    } else {
+                        Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
+                        startContentHighlightActivity()
                     }
                 } else {
                     Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
                     startContentHighlightActivity()
                 }
-            } else {
-                Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
-                startContentHighlightActivity()
-            }
-            return true
-
-        } else if (itemId == R.id.itemSearch) {
-            Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-            if (searchUri == null)
                 return true
-            val intent = Intent(this, SearchActivity::class.java)
-            intent.putExtra(SearchActivity.BUNDLE_SPINE_SIZE, spine?.size ?: 0)
-            intent.putExtra(SearchActivity.BUNDLE_SEARCH_URI, searchUri)
-            intent.putExtra(SearchAdapter.DATA_BUNDLE, searchAdapterDataBundle)
-            intent.putExtra(SearchActivity.BUNDLE_SAVE_SEARCH_QUERY, searchQuery)
-            startActivityForResult(intent, RequestCode.SEARCH.value)
-            return true
 
-        } else if (itemId == R.id.itemConfig) {
-            if (TIMER_FINISHED) {
-                if (mInterstitialAd.isLoaded) {
-                    mInterstitialAd.show()
-                    mInterstitialAd.adListener = object : AdListener() {
-                        override fun onAdClosed() {
-                            super.onAdClosed()
-                            Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-                            showConfigBottomSheetDialogFragment()
-                            loadInterstitialAds()
+            }
+            R.id.itemSearch -> {
+                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                if (searchUri == null)
+                    return true
+                val intent = Intent(this, SearchActivity::class.java)
+                intent.putExtra(SearchActivity.BUNDLE_SPINE_SIZE, spine?.size ?: 0)
+                intent.putExtra(SearchActivity.BUNDLE_SEARCH_URI, searchUri)
+                intent.putExtra(SearchAdapter.DATA_BUNDLE, searchAdapterDataBundle)
+                intent.putExtra(SearchActivity.BUNDLE_SAVE_SEARCH_QUERY, searchQuery)
+                startActivityForResult(intent, RequestCode.SEARCH.value)
+                return true
+
+            }
+            R.id.itemConfig -> {
+                if (TIMER_FINISHED) {
+                    if (mInterstitialAd != null) {
+                        mInterstitialAd?.show(this@FolioActivity)
+                        mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                            override fun onAdDismissedFullScreenContent() {
+                                super.onAdDismissedFullScreenContent()
+                                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                                showConfigBottomSheetDialogFragment()
+                                loadInterstitialAds()
+                            }
                         }
+                    } else {
+                        Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                        showConfigBottomSheetDialogFragment()
                     }
                 } else {
                     Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
                     showConfigBottomSheetDialogFragment()
                 }
-            } else {
-                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-                showConfigBottomSheetDialogFragment()
-            }
-            return true
+                return true
 
-        } else if (itemId == R.id.itemTts) {
-            Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-            showMediaController()
-            return true
+            }
+            R.id.itemTts -> {
+                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
+                showMediaController()
+                return true
+            }
+            else -> return super.onOptionsItemSelected(item)
         }
 
-        return super.onOptionsItemSelected(item)
     }
 
     fun startContentHighlightActivity() {
@@ -881,6 +894,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RequestCode.SEARCH.value) {
             Log.v(LOG_TAG, "-> onActivityResult -> " + RequestCode.SEARCH)
@@ -911,14 +925,14 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             val type = data.getStringExtra(TYPE)
 
             if (type == CHAPTER_SELECTED) {
-                goToChapter(data.getStringExtra(SELECTED_CHAPTER_POSITION))
+                goToChapter(data.getStringExtra(SELECTED_CHAPTER_POSITION)!!)
 
             } else if (type == HIGHLIGHT_SELECTED) {
                 val highlightImpl = data.getParcelableExtra<HighlightImpl>(HIGHLIGHT_ITEM)
-                currentChapterIndex = highlightImpl.pageNumber
+                currentChapterIndex = highlightImpl?.pageNumber!!
                 mFolioPageViewPager!!.currentItem = currentChapterIndex
                 val folioPageFragment = currentFragment ?: return
-                folioPageFragment.scrollToHighlightId(highlightImpl.rangy)
+                highlightImpl?.rangy?.let { folioPageFragment.scrollToHighlightId(it) }
             }
         }
     }

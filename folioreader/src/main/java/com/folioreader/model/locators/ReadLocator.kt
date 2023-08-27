@@ -14,7 +14,7 @@ import org.readium.r2.shared.LocatorText
 
 @JsonPropertyOrder("bookId", "href", "created", "locations")
 @JsonIgnoreProperties(ignoreUnknown = true)
-open class ReadLocator : Locator, Parcelable {
+ class ReadLocator : Locator, Parcelable {
 
     var bookId: String
 
@@ -40,14 +40,6 @@ open class ReadLocator : Locator, Parcelable {
         parcel.readSerializable() as LocatorText?
     )
 
-    override fun writeToParcel(dest: Parcel?, flags: Int) {
-        dest?.writeString(bookId)
-        dest?.writeString(href)
-        dest?.writeLong(created)
-        dest?.writeString(title)
-        dest?.writeSerializable(locations)
-        dest?.writeSerializable(text)
-    }
 
     companion object {
 
@@ -81,6 +73,15 @@ open class ReadLocator : Locator, Parcelable {
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    override fun writeToParcel(dest: Parcel, p1: Int) {
+        dest.writeString(bookId)
+        dest.writeString(href)
+        dest.writeLong(created)
+        dest.writeString(title)
+        dest.writeSerializable(locations)
+        dest.writeSerializable(text)
     }
 
     fun toJson(): String? {
