@@ -100,14 +100,21 @@ public class MediaController {
         mediaItemPosition++;
     }
 
+    static boolean isTtsUsable(Object tts, int status) {
+        return tts != null && status == TextToSpeech.SUCCESS;
+    }
+
     public void setTextToSpeech(final Context context) {
         mTextToSpeech = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
-                if (status != TextToSpeech.ERROR) {
-                    mTextToSpeech.setLanguage(Locale.UK);
-                    mTextToSpeech.setSpeechRate(0.70f);
+                // onInit can run synchronously from the constructor (no TTS engine / not visible on
+                // Android 11+), before mTextToSpeech is assigned: that crashed opening every book.
+                if (!isTtsUsable(mTextToSpeech, status)) {
+                    return;
                 }
+                mTextToSpeech.setLanguage(Locale.UK);
+                mTextToSpeech.setSpeechRate(0.70f);
 
                 mTextToSpeech.setOnUtteranceCompletedListener(
                         new TextToSpeech.OnUtteranceCompletedListener() {
@@ -166,7 +173,7 @@ public class MediaController {
                 mediaPlayer.setPlaybackParams(mediaPlayer.getPlaybackParams().setSpeed(speed));
             }
         } else {
-            mTextToSpeech.setSpeechRate(speed);
+            if (mTextToSpeech != null) mTextToSpeech.setSpeechRate(speed);
         }
     }
 
@@ -187,7 +194,7 @@ public class MediaController {
             if (mediaType == MediaType.SMIL) {
                 playSMIL();
             } else {
-                if (mTextToSpeech.isSpeaking()) {
+                if (mTextToSpeech != null && mTextToSpeech.isSpeaking()) {
                     mTextToSpeech.stop();
                     mIsSpeaking = false;
                     callbacks.resetCurrentIndex();
@@ -221,7 +228,7 @@ public class MediaController {
         if (mediaType == MediaType.TTS) {
             HashMap<String, String> params = new HashMap<>();
             params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "stringId");
-            mTextToSpeech.speak(sentence, TextToSpeech.QUEUE_FLUSH, params);
+            if (mTextToSpeech != null) mTextToSpeech.speak(sentence, TextToSpeech.QUEUE_FLUSH, params);
         }
     }
 

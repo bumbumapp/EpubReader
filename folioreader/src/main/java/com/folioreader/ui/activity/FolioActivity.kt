@@ -53,7 +53,7 @@ import com.folioreader.FolioReader
 import com.folioreader.R
 import com.folioreader.model.DisplayUnit
 import com.folioreader.model.HighlightImpl
-import com.folioreader.model.Timers
+import com.folioreader.ads.InterstitialHelper
 import com.folioreader.model.event.MediaOverlayPlayPauseEvent
 import com.folioreader.model.locators.ReadLocator
 import com.folioreader.model.locators.SearchLocator
@@ -96,7 +96,6 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     var arrayListtitle = arrayListOf<String>()
     var arrayListpath = arrayListOf<String?>()
     var arrayListposition= arrayListOf<String?>()
-    private  var mInterstitialAd: InterstitialAd? =null
 
     private var currentChapterIndex: Int = 0
     private var mFolioPageFragmentAdapter: FolioPageFragmentAdapter? = null
@@ -332,34 +331,11 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         initActionBar()
         initMediaController()
 
-        if (ContextCompat.checkSelfPermission(
-                this@FolioActivity,
-                getWriteExternalStoragePerms()
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this@FolioActivity,
-                arrayOf(getWriteExternalStoragePerms()),
-                Constants.WRITE_EXTERNAL_STORAGE_REQUEST
-            )
-        } else {
-            setupBook()
-        }
+        // Books are read from app-private storage: no storage / media permission is needed.
+        setupBook()
 
-        loadInterstitialAds()
+        InterstitialHelper.preload(this)
 
-    }
-    private fun loadInterstitialAds() {
-        val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(this,getString(R.string.interstitial_ads_id),adRequest,object :InterstitialAdLoadCallback(){
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                mInterstitialAd = interstitialAd;
-            }
-
-            override fun onAdFailedToLoad(p0: LoadAdError) {
-                mInterstitialAd = null
-            }
-        })
     }
     private fun initActionBar() {
 
@@ -405,6 +381,9 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             ColorDrawable(ContextCompat.getColor(this, R.color.white))
         )
         toolbar!!.setTitleTextColor(ContextCompat.getColor(this, R.color.black))
+        // Edge-to-edge (Android 15+): the status bar sits on the white app bar, so use dark icons.
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = true
     }
 
     override fun setNightMode() {
@@ -414,6 +393,8 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
             ColorDrawable(ContextCompat.getColor(this, R.color.black))
         )
         toolbar!!.setTitleTextColor(ContextCompat.getColor(this, R.color.night_title_text_color))
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = false
     }
 
     private fun initMediaController() {
@@ -443,25 +424,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
         when (itemId) {
             android.R.id.home -> {
-
-                if (TIMER_FINISHED) {
-                    if (mInterstitialAd != null) {
-                        mInterstitialAd?.show(this@FolioActivity)
-                        mInterstitialAd?.fullScreenContentCallback = object :FullScreenContentCallback(){
-                            override fun onAdDismissedFullScreenContent() {
-                                super.onAdDismissedFullScreenContent()
-                                Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
-                                startContentHighlightActivity()
-                                TIMER_FINISHED=false
-                                Timers.timer().start()
-                                loadInterstitialAds()
-                            }
-                        }
-                    } else {
-                        Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
-                        startContentHighlightActivity()
-                    }
-                } else {
+                InterstitialHelper.showIfReady(this) {
                     Log.v(LOG_TAG, "-> onOptionsItemSelected -> drawer")
                     startContentHighlightActivity()
                 }
@@ -482,22 +445,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
             }
             R.id.itemConfig -> {
-                if (TIMER_FINISHED) {
-                    if (mInterstitialAd != null) {
-                        mInterstitialAd?.show(this@FolioActivity)
-                        mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                            override fun onAdDismissedFullScreenContent() {
-                                super.onAdDismissedFullScreenContent()
-                                Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-                                showConfigBottomSheetDialogFragment()
-                                loadInterstitialAds()
-                            }
-                        }
-                    } else {
-                        Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
-                        showConfigBottomSheetDialogFragment()
-                    }
-                } else {
+                InterstitialHelper.showIfReady(this) {
                     Log.v(LOG_TAG, "-> onOptionsItemSelected -> " + item.title)
                     showConfigBottomSheetDialogFragment()
                 }
@@ -1152,7 +1100,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
-            Constants.WRITE_EXTERNAL_STORAGE_REQUEST -> if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Constants.WRITE_EXTERNAL_STORAGE_REQUEST -> if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 setupBook()
             } else {
                 Toast.makeText(this, getString(R.string.cannot_access_epub_message), Toast.LENGTH_LONG).show()

@@ -15,587 +15,313 @@
  */
 package com.folioreader.android.sample;
 
-
-import static com.folioreader.Constants.TIMER_FINISHED;
-import static com.folioreader.Constants.TIMES;
-
-import android.Manifest;
-import android.content.ContentResolver;
-import android.content.ContentUris;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.IInterface;
-import android.os.Looper;
-import android.preference.PreferenceManager;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.loader.content.CursorLoader;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.IntentCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.folioreader.Config;
 import com.folioreader.FolioReader;
 import com.folioreader.model.HighLight;
-import com.folioreader.model.Timers;
 import com.folioreader.model.locators.ReadLocator;
-import com.folioreader.ui.base.OnSaveHighlight;
 import com.folioreader.util.AppUtil;
 import com.folioreader.util.OnHighlightListener;
 import com.folioreader.util.ReadLocatorListener;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.FullScreenContentCallback;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.folioreader.ads.AdsConsent;
+import com.folioreader.ads.BannerHelper;
+import com.folioreader.ads.InterstitialHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HomeActivity extends AppCompatActivity
         implements OnHighlightListener, ReadLocatorListener, FolioReader.OnClosedListener {
 
     private static final String LOG_TAG = HomeActivity.class.getSimpleName();
+    private static final String KEY_PATHS = "key";
+    private static final String KEY_MODIFIED = "keylink";
+
+    private final ExecutorService io = Executors.newSingleThreadExecutor();
     private FolioReader folioReader;
-    LinearLayout opentoEmpty;
-    RecyclerView books;
-    ArrayList<String>arrayList=new ArrayList<>();
-    ArrayList<String>arrayListmodified=new ArrayList<>();
-    ArrayList<String>arrayListtitle=new ArrayList<>();
-    private InterstitialAd mInterstitialAd;
+    private LinearLayout emptyView;
+    private RecyclerView books;
+    private Toolbar toolbar;
+    private boolean privacyItemAdded;
 
-
+    private final ActivityResultLauncher<String[]> openDocument =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    importAndOpen(uri);
+                }
+            });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        // Android 15+ edge-to-edge: the status bar is drawn over the light window background.
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(true);
 
         folioReader = FolioReader.get()
                 .setOnHighlightListener(this)
                 .setReadLocatorListener(this)
                 .setOnClosedListener(this);
 
-        getHighlightsAndSave();
-        books=findViewById(R.id.book_epubs);
+        toolbar = findViewById(R.id.toolbar);
+        emptyView = findViewById(R.id.toDoEmptyView);
+        books = findViewById(R.id.book_epubs);
         books.setHasFixedSize(true);
-        books.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
-       if (getArrayList()!=null && getArrayListmodified()!=null){
-           arrayList=getArrayList();
-           arrayListmodified=getArrayListmodified();
+        books.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        findViewById(R.id.btn_raw).setOnClickListener(v -> openFiles());
 
+        refreshList();
 
-           for (int i=0;i<arrayList.size();i++){
-               File file=new File(arrayList.get(i));
-               if (!file.exists()){
-                   arrayList.remove(arrayList.get(i));
-                   arrayListmodified.remove(arrayListmodified.get(i));
-               }
-           }
-
-           saveArrayList(arrayList);
-           saveArrayListLink(arrayListmodified);
-           setadapter(arrayList,arrayListmodified);
-       }
-        if (getIntent().getData()!=null) {
-            Intent intent = getIntent();
-            if (intent == null)
-                return;
-            String a = intent.getAction();
-            if (a == null)
-                return;
-            Uri u = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            if (u == null){
-                u = intent.getData();
-            }
-
-            if (u == null) {
-                String t = intent.getStringExtra(Intent.EXTRA_TEXT); // handling SEND intents
-                if (t != null)
-                    u = Uri.parse(t);
-            }
-            if (u == null)
-                return;
-            Log.d("tag","URi"+u);
-            getToFile2(u);
-
+        if (savedInstanceState == null) {
+            handleViewIntent(getIntent());
         }
-        opentoEmpty=findViewById(R.id.toDoEmptyView);
-        if (getArrayList()!=null){
-            opentoEmpty.setVisibility(View.GONE);
-        }
-        if (getArrayList()==null){
-            opentoEmpty.setVisibility(View.VISIBLE);
-        }
-        findViewById(R.id.btn_raw).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openfiles();
-            }
+
+        AdsConsent.gather(this, () -> {
+            BannerHelper.load(this, (ViewGroup) findViewById(R.id.adView));
+            InterstitialHelper.preload(this);
+            addPrivacyOptionsIfRequired();
         });
-
-        loadBanners();
-        loadInterstitialAds();
-        Timers.timer().start();
     }
-
-    private void openfiles() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/epub+zip");
-        String[] mimetypes = {"application/epub+zip"};
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes);
-        startActivityForResult(intent,101);
-    }
-    private static String getFilePathForN(Uri uri, Context context) {
-        Uri returnUri = uri;
-        Cursor returnCursor = context.getContentResolver().query(returnUri, null, null, null, null);
-
-        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
-        returnCursor.moveToFirst();
-        String name = (returnCursor.getString(nameIndex));
-        String size = (Long.toString(returnCursor.getLong(sizeIndex)));
-        File file = new File(context.getFilesDir(), name);
-        try {
-            InputStream inputStream = context.getContentResolver().openInputStream(uri);
-            FileOutputStream outputStream = new FileOutputStream(file);
-
-            int read = 0;
-            int maxBufferSize = 1 * 1024 * 1024;
-            int bytesAvailable = inputStream.available();
-
-            //int bufferSize = 1024;
-            int bufferSize = Math.min(bytesAvailable, maxBufferSize);
-
-            final byte[] buffers = new byte[bufferSize];
-            while ((read = inputStream.read(buffers)) != -1) {
-                outputStream.write(buffers, 0, read);
-            }
-            Log.e("File Size", "Size " + file.length());
-            inputStream.close();
-            outputStream.close();
-            Log.e("File Path", "Path " + file.getPath());
-            Log.e("File Size", "Size " + file.length());
-        } catch (Exception e) {
-            Log.e("Exception", e.getMessage());
-        }
-        return file.getPath();
-    }
-
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case 101:
-                if (resultCode == RESULT_OK) {
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleViewIntent(intent);
+    }
 
-                    Uri uri=data.getData();
-                    String path=getDriveFilePath(uri,this);
-                    String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
-
-                    Log.d("Tag","Tags"+currentTime);
-                    if (getArrayList()!=null){
-                        arrayList=getArrayList();
-                        arrayListmodified=getArrayListmodified();
-                        for (int i=0;i<arrayList.size();i++){
-                            arrayListtitle.add(arrayList.get(i).substring(arrayList.get(i).lastIndexOf("/")+1));
-                        }
-                        if (!arrayListtitle.contains(path.substring(path.lastIndexOf("/")+1))){
-                            arrayList.add(path);
-                            arrayListmodified.add(currentTime);
-                        }
-                        else {
-                             currentTime= new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());;
-                             int i=arrayList.indexOf(path);
-                             arrayListmodified.set(i, currentTime);
-                        }
-                        saveArrayList(arrayList);
-                        saveArrayListLink(arrayListmodified);
-
-                    }
-                    if (getArrayList()==null){
-                        arrayList.add(path);
-                        arrayListmodified.add(currentTime);
-                        saveArrayList(arrayList);
-                        saveArrayListLink(arrayListmodified);
-                    }
-
-                    Log.d("Tag","Errs"+uri);
-                    Config config = AppUtil.getSavedConfig(getApplicationContext());
-                    if (config == null)
-                        config = new Config();
-                    config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
-                    Log.d("Tag", "Errrs" + path);
-                    folioReader.setConfig(config, true)
-                            .openBook(path);
-
-                            setadapter(getArrayList(),getArrayListmodified());
-
-
-
-                    if (getArrayList()!=null){
-                        opentoEmpty.setVisibility(View.GONE);
-                    }
-                    if (getArrayList()==null){
-                        opentoEmpty.setVisibility(View.VISIBLE);
-                    }
-
-
-                }
+    private void addPrivacyOptionsIfRequired() {
+        if (privacyItemAdded || !AdsConsent.isPrivacyOptionsRequired(this)) {
+            return;
         }
-    }
-    public ArrayList<String> getArrayList(){
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Gson gson = new Gson();
-        String json = prefs.getString("key", null);
-        Type type = new TypeToken<ArrayList<String>>() {}.getType();
-        return gson.fromJson(json, type);
-    }
-
-    public void saveArrayList(ArrayList<String> list){
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(list);
-        editor.putString("key", json);
-        editor.apply();
-
-    }
-    public void saveArrayListLink(ArrayList<String> list){
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(list);
-        editor.putString("keylink", json);
-        editor.apply();
-
-    }
-    public ArrayList<String> getArrayListmodified(){
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Gson gson = new Gson();
-        String json = prefs.getString("keylink", null);
-        Type type = new TypeToken<ArrayList<String>>() {}.getType();
-        return gson.fromJson(json, type);
-    }
-    private void loadBanners() {
-
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
-            }
+        privacyItemAdded = true;
+        toolbar.getMenu().add(R.string.privacy_options).setOnMenuItemClickListener(item -> {
+            AdsConsent.showPrivacyOptions(this);
+            return true;
         });
-        AdView mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
     }
 
-    private void getToFile2(Uri uri) {
-
-        String path=getFilePathForN(uri,this);
-        String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
-
-        Log.d("Tag","Tags"+currentTime);
-        if (getArrayList()!=null){
-            arrayList=getArrayList();
-            arrayListmodified=getArrayListmodified();
-            for (int i=0;i<arrayList.size();i++){
-                arrayListtitle.add(arrayList.get(i).substring(arrayList.get(i).lastIndexOf("/")+1));
-            }
-            if (!arrayListtitle.contains(path.substring(path.lastIndexOf("/")+1))){
-                arrayList.add(path);
-                arrayListmodified.add(currentTime);
-                saveArrayList(arrayList);
-                saveArrayListLink(arrayListmodified);
-            }
-            else {
-                currentTime= new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());;
-                int i=arrayListtitle.indexOf(path.substring(path.lastIndexOf("/")+1));
-                arrayListmodified.set(i, currentTime);
-                saveArrayList(arrayList);
-                saveArrayListLink(arrayListmodified);
-            }
-
-
+    private void handleViewIntent(@Nullable Intent intent) {
+        if (intent == null || intent.getAction() == null) {
+            return;
         }
-        if (getArrayList()==null){
-            arrayList.add(path);
-            arrayListmodified.add(currentTime);
-            saveArrayList(arrayList);
-            saveArrayListLink(arrayListmodified);
+        Uri uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri.class);
+        if (uri == null) {
+            uri = intent.getData();
         }
-
-        Config config = AppUtil.getSavedConfig(getApplicationContext());
-        if (config == null)
-            config = new Config();
-        config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
-        Log.d("Tag", "Errrs" + path);
-        folioReader.setConfig(config, true)
-                .openBook(path);
-       // Toast.makeText(this,getArrayList().size()+"",Toast.LENGTH_LONG).show();
-        if (getArrayListmodified()!=null){
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setadapter(getArrayList(),getArrayListmodified());
-                }
-            },4000);
+        if (uri == null) {
+            String text = intent.getStringExtra(Intent.EXTRA_TEXT); // SEND intents
+            if (text != null) {
+                uri = Uri.parse(text);
+            }
         }
-
-
-
+        if (uri != null && uri.getScheme() != null) {
+            importAndOpen(uri);
+        }
     }
 
-    private void setadapter(ArrayList<String> arrayList, ArrayList<String> arrayListmodified) {
-        EpubAdabter epubAdabter=new EpubAdabter(this,arrayList,arrayListmodified, new ClickListener() {
-            @Override
-            public void onClick(final int positon) {
-               if (TIMER_FINISHED){
-                    if (mInterstitialAd != null){
-                        mInterstitialAd.show(HomeActivity.this);
-                        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                Timers.timer().start();
-                                TIMER_FINISHED=false;
-                                loadInterstitialAds();
-                                onClickNewItem(positon);
-                                super.onAdDismissedFullScreenContent();
-                            }
-                        });
-                    }
-                    else {
-                       onClickNewItem(positon);
-                    }
-               }else {
-                   onClickNewItem(positon);
-               }
-
-
-            }
-        });
-        books.setAdapter(epubAdabter);
-    }
-    private void loadInterstitialAds() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        InterstitialAd.load(this, getString(R.string.interstitial_ads_id), adRequest, new InterstitialAdLoadCallback() {
-            @Override
-            public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
-                mInterstitialAd = interstitialAd;
-            }
-
-            @Override
-            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                mInterstitialAd = null;
-            }
-        });
-
-    }
-
-    private void onClickNewItem(int positon){
-       ArrayList<String> arrayList1=new ArrayList();
-       ArrayList<String> arrayListmodiffed1=new ArrayList();
-       arrayList1=getArrayList();
-       arrayListmodiffed1=getArrayListmodified();
-       String currentTime = new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
-       arrayListmodiffed1.set(positon,currentTime);
-       saveArrayListLink(arrayListmodiffed1);
-       setadapter(arrayList1,arrayListmodiffed1);
-       Config config = AppUtil.getSavedConfig(getApplicationContext());
-       if (config == null)
-           config = new Config();
-       config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
-       folioReader.setConfig(config, true)
-               .openBook(arrayList1.get(positon));
-   }
-    private static String getDriveFilePath(Uri uri, Context context) {
-        Uri returnUri = uri;
-        Cursor returnCursor = context.getContentResolver().query(returnUri, null, null, null, null);
-        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
-        returnCursor.moveToFirst();
-
-        String name = (returnCursor.getString(nameIndex));
-        String size = (Long.toString(returnCursor.getLong(sizeIndex)));
-        File file = new File(context.getCacheDir(), name);
+    private void openFiles() {
         try {
-            InputStream inputStream = context.getContentResolver().openInputStream(uri);
-            FileOutputStream outputStream = new FileOutputStream(file);
-            int read = 0;
-            int maxBufferSize = 1 * 1024 * 1024;
-            int bytesAvailable = inputStream.available();
+            openDocument.launch(new String[]{"application/epub+zip"});
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_file_picker, Toast.LENGTH_LONG).show();
+        }
+    }
 
-            //int bufferSize = 1024;
-            int bufferSize = Math.min(bytesAvailable, maxBufferSize);
+    /** Copies the picked document into app storage off the main thread, then opens it. */
+    private void importAndOpen(Uri uri) {
+        final Context app = getApplicationContext();
+        io.execute(() -> {
+            final String path = copyToAppStorage(app, uri);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (path == null) {
+                    Toast.makeText(this, R.string.cannot_open_book, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                ArrayList<String> paths = getPaths();
+                ArrayList<String> modified = getModified();
+                BookLibrary.addOrTouch(paths, modified, path, now());
+                save(paths, modified);
+                refreshList();
+                openBook(path);
+            });
+        });
+    }
 
-            final byte[] buffers = new byte[bufferSize];
-            while ((read = inputStream.read(buffers)) != -1) {
-                outputStream.write(buffers, 0, read);
+    @Nullable
+    static String displayName(Context context, Uri uri) {
+        String name = null;
+        if ("content".equals(uri.getScheme())) {
+            try (Cursor c = context.getContentResolver().query(uri, null, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    int idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (idx >= 0) {
+                        name = c.getString(idx);
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(LOG_TAG, "displayName", e);
             }
-            Log.e("File Size", "Size " + file.length());
-            inputStream.close();
-            outputStream.close();
-            Log.e("File Path", "Path " + file.getPath());
+        }
+        if (name == null) {
+            name = uri.getLastPathSegment();
+        }
+        return BookFiles.safeEpubName(name);
+    }
+
+    @Nullable
+    private static String copyToAppStorage(Context context, Uri uri) {
+        String name = displayName(context, uri);
+        File dir = new File(context.getFilesDir(), "books");
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            return null;
+        }
+        File file = new File(dir, name);
+        try (InputStream in = context.getContentResolver().openInputStream(uri);
+             OutputStream out = new FileOutputStream(file)) {
+            if (in == null) {
+                return null;
+            }
+            byte[] buffer = new byte[64 * 1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
         } catch (Exception e) {
-            Log.e("Exception", e.getMessage());
+            Log.e(LOG_TAG, "copyToAppStorage", e);
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+            return null;
         }
-        return file.getPath();
+        return file.length() > 0 ? file.getPath() : null;
     }
 
-
-    private ReadLocator getLastReadLocator() {
-
-        String jsonString = loadAssetTextAsString("Locators/LastReadLocators/last_read_locator_1.json");
-        return ReadLocator.fromJson(jsonString);
+    private void refreshList() {
+        ArrayList<String> paths = getPaths();
+        ArrayList<String> modified = getModified();
+        BookLibrary.prune(paths, modified, BookLibrary.FILE_EXISTS);
+        save(paths, modified);
+        books.setAdapter(new EpubAdabter(this, paths, modified,
+                position -> InterstitialHelper.showIfReady(this, () -> onBookClicked(position))));
+        emptyView.setVisibility(paths.isEmpty() ? View.VISIBLE : View.GONE);
     }
-    public static String[] getTrailFromUri(Uri uri) {
-        if ("org.courville.nova.provider".equals(uri.getHost()) && ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
-            String path = uri.getPath();
-            if (path.startsWith("/external_files/")) {
-                return path.substring("/external_files/".length()).split("/");
-            }
+
+    private void onBookClicked(int position) {
+        ArrayList<String> paths = getPaths();
+        ArrayList<String> modified = getModified();
+        BookLibrary.prune(paths, modified, BookLibrary.FILE_EXISTS);
+        if (position < 0 || position >= paths.size()) {
+            refreshList();
+            return;
         }
-        return getTrailPathFromUri(uri).split("/");
+        modified.set(position, now());
+        save(paths, modified);
+        String path = paths.get(position);
+        refreshList();
+        openBook(path);
     }
 
-    public static String getTrailPathFromUri(Uri uri) {
+    private void openBook(String path) {
+        Config config = AppUtil.getSavedConfig(getApplicationContext());
+        if (config == null) {
+            config = new Config();
+        }
+        config.setAllowedDirection(Config.AllowedDirection.VERTICAL_AND_HORIZONTAL);
+        folioReader.setConfig(config, true).openBook(path);
+    }
 
-        String path = uri.getPath();
-        String[] array = path.split(":");
-        if (array.length > 1) {
-            return array[array.length - 1];
-        } else {
-            return path;
+    private static String now() {
+        return new SimpleDateFormat("HH:mm,dd.MM.yyyy", Locale.getDefault()).format(new Date());
+    }
+
+    private SharedPreferences prefs() {
+        // Same file as the deprecated PreferenceManager.getDefaultSharedPreferences(): keeps saved lists.
+        return getSharedPreferences(getPackageName() + "_preferences", MODE_PRIVATE);
+    }
+
+    private ArrayList<String> readList(String key) {
+        Type type = new TypeToken<ArrayList<String>>() {
+        }.getType();
+        try {
+            ArrayList<String> list = new Gson().fromJson(prefs().getString(key, null), type);
+            return BookLibrary.orEmpty(list);
+        } catch (RuntimeException e) {
+            return new ArrayList<>();
         }
     }
+
+    private ArrayList<String> getPaths() {
+        return readList(KEY_PATHS);
+    }
+
+    private ArrayList<String> getModified() {
+        return readList(KEY_MODIFIED);
+    }
+
+    private void save(ArrayList<String> paths, ArrayList<String> modified) {
+        Gson gson = new Gson();
+        prefs().edit()
+                .putString(KEY_PATHS, gson.toJson(paths))
+                .putString(KEY_MODIFIED, gson.toJson(modified))
+                .apply();
+    }
+
     @Override
     public void saveReadLocator(ReadLocator readLocator) {
         Log.i(LOG_TAG, "-> saveReadLocator -> " + readLocator.toJson());
     }
 
-    /*
-     * For testing purpose, we are getting dummy highlights from asset. But you can get highlights from your server
-     * On success, you can save highlights to FolioReader DB.
-     */
-    private void getHighlightsAndSave() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ArrayList<HighLight> highlightList = null;
-                ObjectMapper objectMapper = new ObjectMapper();
-                try {
-                    highlightList = objectMapper.readValue(
-                            loadAssetTextAsString("highlights/highlights_data.json"),
-                            new TypeReference<List<HighlightData>>() {
-                            });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if (highlightList == null) {
-                    folioReader.saveReceivedHighLights(highlightList, new OnSaveHighlight() {
-                        @Override
-                        public void onFinished() {
-                            //You can do anything on successful saving highlight list
-                        }
-                    });
-                }
-            }
-        }).start();
-    }
-
-    private String loadAssetTextAsString(String name) {
-        BufferedReader in = null;
-        try {
-            StringBuilder buf = new StringBuilder();
-            InputStream is = getAssets().open(name);
-            in = new BufferedReader(new InputStreamReader(is));
-
-            String str;
-            boolean isFirst = true;
-            while ((str = in.readLine()) != null) {
-                if (isFirst)
-                    isFirst = false;
-                else
-                    buf.append('\n');
-                buf.append(str);
-            }
-            return buf.toString();
-        } catch (IOException e) {
-            Log.e("HomeActivity", "Error opening asset " + name);
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    Log.e("HomeActivity", "Error closing asset " + name);
-                }
-            }
-        }
-        return null;
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        io.shutdown();
         FolioReader.clear();
     }
 
     @Override
     public void onHighlight(HighLight highlight, HighLight.HighLightAction type) {
-//        Toast.makeText(this,
-//                "highlight id = " + highlight.getUUID() + " type = " + type,
-//                Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onFolioReaderClosed() {
         Log.v(LOG_TAG, "-> onFolioReaderClosed");
+        refreshList();
     }
-
-
-
 }
