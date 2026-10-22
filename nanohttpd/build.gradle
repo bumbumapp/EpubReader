@@ -1,0 +1,9 @@
+// Vendored NanoHttpd (BSD-3, see LICENSE.md) core + nanolets at commit fd80618e93d — the exact
+// snapshot r2-streamer-kotlin was built against (org.nanohttpd.* packages). JitPack no longer serves
+// that build and Maven Central only has 2.3.1 (fi.iki.elonen.* packages), so it is built from source.
+apply plugin: 'java-library'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}

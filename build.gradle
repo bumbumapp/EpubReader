@@ -5,38 +5,38 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.0'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath "com.android.tools.build:gradle:$versions.androidGradlePlugin"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     }
 }
 
 allprojects {
-
-    configurations.all {
-        resolutionStrategy {
-            cacheChangingModulesFor 0, 'seconds'
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            // r2-streamer pins a NanoHttpd JitPack snapshot that is no longer served: use the vendored source.
+            substitute module('com.github.NanoHttpd.nanohttpd:nanohttpd') using project(':nanohttpd')
+            substitute module('com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets') using project(':nanohttpd')
         }
+        // r2-shared declares Fuel (jcenter-only); only its unused FuelPromiseExtension references it.
+        exclude group: 'com.github.kittinunf.fuel'
     }
-
     repositories {
-        mavenLocal()
         google()
-        jcenter()
-        maven { url "https://jitpack.io" }
+        mavenCentral()
+        // R2 streamer/shared (codetoart forks) and NanoHttpd snapshots are only published on JitPack.
+        maven {
+            url "https://jitpack.io"
+            content {
+                includeGroupByRegex "com\\.github\\..*"
+            }
+        }
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
 }

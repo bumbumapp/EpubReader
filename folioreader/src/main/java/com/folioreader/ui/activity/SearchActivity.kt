@@ -31,10 +31,15 @@ import com.folioreader.ui.view.FolioSearchView
 import com.folioreader.util.AppUtil
 import com.folioreader.util.UiUtil
 import com.folioreader.viewmodels.SearchViewModel
-import kotlinx.android.synthetic.main.activity_search.*
 import java.lang.reflect.Field
 
 class SearchActivity : AppCompatActivity(), OnItemClickListener {
+
+    private val toolbar: androidx.appcompat.widget.Toolbar
+        get() = findViewById(R.id.toolbar)
+    private val recyclerView: androidx.recyclerview.widget.RecyclerView
+        get() = findViewById(R.id.recyclerView)
+
 
     companion object {
         @JvmField

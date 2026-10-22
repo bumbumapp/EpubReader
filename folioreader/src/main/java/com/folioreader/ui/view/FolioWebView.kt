@@ -37,7 +37,6 @@ import com.folioreader.util.AppUtil
 import com.folioreader.util.HighlightUtil
 import com.folioreader.util.UiUtil
 import dalvik.system.PathClassLoader
-import kotlinx.android.synthetic.main.text_selection.view.*
 import org.json.JSONObject
 import org.springframework.util.ReflectionUtils
 import java.lang.ref.WeakReference
@@ -156,13 +155,13 @@ class FolioWebView : WebView {
 
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
-        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             //Log.d(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
 
             if (!webViewPager.isScrolling) {
@@ -212,13 +211,13 @@ class FolioWebView : WebView {
 
     private inner class VerticalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
             //Log.v(LOG_TAG, "-> onScroll -> e1 = " + e1 + ", e2 = " + e2 + ", distanceX = " + distanceX + ", distanceY = " + distanceY);
             lastScrollType = LastScrollType.USER
             return false
         }
 
-        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
             //Log.v(LOG_TAG, "-> onFling -> e1 = " + e1 + ", e2 = " + e2 + ", velocityX = " + velocityX + ", velocityY = " + velocityY);
             lastScrollType = LastScrollType.USER
             return false
@@ -250,7 +249,7 @@ class FolioWebView : WebView {
 
         val textSelectionMiddleDrawable = ContextCompat.getDrawable(
             context,
-            R.drawable.abc_text_select_handle_middle_mtrl_dark
+            R.drawable.abc_text_select_handle_middle_mtrl
         )
         handleHeight = textSelectionMiddleDrawable?.intrinsicHeight ?: (24 * density).toInt()
 
@@ -801,3 +800,23 @@ class FolioWebView : WebView {
             uiHandler.postDelayed(isScrollingRunnable!!, IS_SCROLLING_CHECK_TIMER.toLong())
     }
 }
+
+// Replaces the removed kotlin-android-extensions synthetic accessors for text_selection.xml.
+private val android.view.View.blueHighlight: android.widget.ImageView
+    get() = findViewById(R.id.blueHighlight)
+private val android.view.View.copySelection: android.widget.TextView
+    get() = findViewById(R.id.copySelection)
+private val android.view.View.defineSelection: android.widget.TextView
+    get() = findViewById(R.id.defineSelection)
+private val android.view.View.deleteHighlight: android.widget.ImageView
+    get() = findViewById(R.id.deleteHighlight)
+private val android.view.View.greenHighlight: android.widget.ImageView
+    get() = findViewById(R.id.greenHighlight)
+private val android.view.View.pinkHighlight: android.widget.ImageView
+    get() = findViewById(R.id.pinkHighlight)
+private val android.view.View.shareSelection: android.widget.TextView
+    get() = findViewById(R.id.shareSelection)
+private val android.view.View.underlineHighlight: android.widget.ImageView
+    get() = findViewById(R.id.underlineHighlight)
+private val android.view.View.yellowHighlight: android.widget.ImageView
+    get() = findViewById(R.id.yellowHighlight)

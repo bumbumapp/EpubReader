@@ -507,7 +507,7 @@ class FolioPageFragment : Fragment(),
 
         // prevent favicon.ico to be loaded automatically
         override fun shouldInterceptRequest(view: WebView, url: String): WebResourceResponse? {
-            if (url.toLowerCase().contains("/favicon.ico")) {
+            if (url.lowercase().contains("/favicon.ico")) {
                 try {
                     return WebResourceResponse("image/png", null, null)
                 } catch (e: Exception) {

@@ -1,43 +1,16 @@
 apply plugin: 'com.android.library'
-apply from: '../config/quality/quality.gradle'
-apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-
-ext {
-    bintrayRepo = 'maven'
-    bintrayName = 'folioreader'
-
-    publishedGroupId = 'com.folioreader'
-    libraryName = 'FolioReader'
-    artifact = 'folioreader'
-
-    libraryDescription = 'An epub reader for Android'
-
-    siteUrl = 'https://github.com/FolioReader/FolioReader-Android'
-    gitUrl = 'https://github.com/FolioReader/FolioReader-Android.git'
-
-    libraryVersion = versions.folioreaderSdk
-
-    developerId = 'mobisystech'
-    developerName = 'Folio Reader'
-    developerEmail = 'mahavir@codetoart.com'
-
-    licenseName = 'FreeBSD License'
-    licenseUrl = 'https://en.wikipedia.org/wiki/FreeBSD_Documentation_License#License'
-    allLicenses = ["FreeBSD"]
-}
 
 android {
+    namespace 'com.folioreader'
     useLibrary 'org.apache.http.legacy'
-    compileSdkVersion 33
+    compileSdk versions.androidCompileSdk
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 33
-        versionCode versions.projectVersionCode
-        versionName versions.projectVersionName
+        minSdk versions.androidMinSdk
+        targetSdk versions.androidTargetSdk
         vectorDrawables.useSupportLibrary = true
+        consumerProguardFiles 'consumer-rules.pro'
     }
 
     sourceSets {
@@ -51,52 +24,46 @@ android {
         }
     }
 
-    packagingOptions {
-        exclude 'META-INF/ASL2.0'
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/dependencies.txt'
-        exclude 'META-INF/LGPL2.1'
-        exclude 'META-INF/services/javax.annotation.processing.Processor'
+    packaging {
+        resources {
+            excludes += ['META-INF/ASL2.0', 'META-INF/DEPENDENCIES.txt', 'META-INF/LICENSE.txt',
+                         'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/LICENSE',
+                         'META-INF/DEPENDENCIES', 'META-INF/notice.txt', 'META-INF/license.txt',
+                         'META-INF/dependencies.txt', 'META-INF/LGPL2.1',
+                         'META-INF/services/javax.annotation.processing.Processor']
+        }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildFeatures {
+        buildConfig true
     }
 
-    lintOptions {
+    lint {
         abortOnError false
         lintConfig file("lint.xml")
     }
-
-    checkstyle {
-        ignoreFailures = true
-    }
 }
 
-apply from: '../folioreader/bintray/installv1.gradle'
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    implementation "androidx.appcompat:appcompat:$versions.appcompat"
+    api "androidx.appcompat:appcompat:$versions.appcompat"
+    api 'androidx.core:core:1.17.0'
     implementation "androidx.constraintlayout:constraintlayout:$versions.constraintLayout"
     implementation "androidx.recyclerview:recyclerview:$versions.recyclerview"
     implementation "com.google.android.material:material:$versions.material"
-    testImplementation 'junit:junit:4.12'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    testImplementation 'junit:junit:4.13.2'
 
-    implementation 'org.slf4j:slf4j-android:1.7.25'
+    implementation 'org.slf4j:slf4j-android:1.7.36'
     implementation 'com.daimajia.swipelayout:library:1.2.0@aar'
 
-    //Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
-    implementation 'org.greenrobot:eventbus:3.1.1'
+    implementation 'org.greenrobot:eventbus:3.3.1'
 
     implementation "com.fasterxml.jackson.core:jackson-core:$versions.jackson"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$versions.jackson"
@@ -108,21 +75,22 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-jackson:$versions.retrofit"
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
     // R2 modules
-    api("com.github.codetoart:r2-shared-kotlin:$versions.r2SharedKotlin") {
-        changing = true
-    }
+    api("com.github.codetoart:r2-shared-kotlin:$versions.r2SharedKotlin")
     api("com.github.codetoart:r2-streamer-kotlin:$versions.r2StreamerKotlin") {
         exclude group: "org.slf4j", module: "slf4j-api"
-        changing = true
     }
 
     // Only ReflectionUtils in Spring framework is used
-    implementation 'org.springframework:spring-core:4.3.19.RELEASE'
+    implementation 'org.springframework:spring-core:4.3.30.RELEASE'
 
-    // Lifecycle
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
 
-    implementation 'com.google.android.gms:play-services-ads:20.2.0'
-
+    api 'com.google.android.gms:play-services-ads:25.5.0'
+    api 'com.google.android.ump:user-messaging-platform:4.0.0'
 }
-apply from: '../folioreader/bintray/bintrayv1.gradle'
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
