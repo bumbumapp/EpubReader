@@ -15,7 +15,6 @@ import androidx.fragment.app.Fragment
 import com.folioreader.Config
 import com.folioreader.Constants
 import com.folioreader.R
-import com.folioreader.model.Timers
 import com.folioreader.model.event.ReloadDataEvent
 import com.folioreader.ui.activity.FolioActivity
 import com.folioreader.ui.activity.FolioActivityCallback
@@ -31,13 +30,35 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.android.synthetic.main.view_config.*
 import org.greenrobot.eventbus.EventBus
 
 /**
  * Created by mobisys2 on 11/16/2016.
  */
 class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
+    private val buttonHorizontal: android.widget.TextView
+        get() = requireView().findViewById(R.id.buttonHorizontal)
+    private val buttonVertical: android.widget.TextView
+        get() = requireView().findViewById(R.id.buttonVertical)
+    private val container: android.view.View
+        get() = requireView().findViewById(R.id.container)
+    private val view5: android.view.View
+        get() = requireView().findViewById(R.id.view5)
+    private val view_config_font_andada: android.widget.TextView
+        get() = requireView().findViewById(R.id.view_config_font_andada)
+    private val view_config_font_lato: android.widget.TextView
+        get() = requireView().findViewById(R.id.view_config_font_lato)
+    private val view_config_font_lora: android.widget.TextView
+        get() = requireView().findViewById(R.id.view_config_font_lora)
+    private val view_config_font_raleway: android.widget.TextView
+        get() = requireView().findViewById(R.id.view_config_font_raleway)
+    private val view_config_font_size_seek_bar: android.widget.SeekBar
+        get() = requireView().findViewById(R.id.view_config_font_size_seek_bar)
+    private val view_config_ib_day_mode: android.widget.ImageButton
+        get() = requireView().findViewById(R.id.view_config_ib_day_mode)
+    private val view_config_ib_night_mode: android.widget.ImageButton
+        get() = requireView().findViewById(R.id.view_config_ib_night_mode)
+
 
     companion object {
         const val FADE_DAY_NIGHT_MODE = 500
@@ -48,7 +69,6 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     private lateinit var config: Config
     private var isNightMode = false
     private lateinit var activityCallback: FolioActivityCallback
-    private  var mInterstitialAd: InterstitialAd?=null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.view_config, container)
     }
@@ -70,20 +90,6 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
         config = AppUtil.getSavedConfig(activity)!!
         initViews()
-        loadInterstitialAds()
-    }
-    private fun loadInterstitialAds() {
-        val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(requireContext(),getString(R.string.interstitial_ads_id),adRequest,object :
-            InterstitialAdLoadCallback(){
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                mInterstitialAd = interstitialAd;
-            }
-
-            override fun onAdFailedToLoad(p0: LoadAdError) {
-                mInterstitialAd = null
-            }
-        })
     }
     override fun onDestroy() {
         super.onDestroy()
@@ -191,26 +197,10 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun selectFont(selectedFont: Int, isReloadNeeded: Boolean) {
-        if (Constants.TIMER_FINISHED) {
-            if (mInterstitialAd != null) {
-                mInterstitialAd?.show(requireActivity())
-                mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                    override fun onAdDismissedFullScreenContent() {
-                        super.onAdDismissedFullScreenContent()
-                        selectedFont(selectedFont,isReloadNeeded)
-                        loadInterstitialAds()
-                        Constants.TIMER_FINISHED =false;
-                        Timers.timer().start()
-                    }
-                }
-            } else {
-                selectedFont(selectedFont,isReloadNeeded)
-            }
-        } else {
-            selectedFont(selectedFont,isReloadNeeded)
-        }
-
+        // Font changes are not a natural break point: no interstitial here.
+        selectedFont(selectedFont, isReloadNeeded)
     }
+
     private fun selectedFont(selectedFont: Int, isReloadNeeded: Boolean){
         when (selectedFont) {
             Constants.FONT_ANDADA -> setSelectedFont(true, false, false, false)
