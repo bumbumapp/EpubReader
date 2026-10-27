@@ -5,8 +5,8 @@ versions.r2SharedKotlin = "1.0.4-2"
 versions.r2StreamerKotlin = "1.0.4-2"
 
 // Play: versionCode 10 is live.
-versions.projectVersionCode = 11
-versions.projectVersionName = "1.3.0"
+versions.projectVersionCode = 12
+versions.projectVersionName = "1.4.0"
 
 versions.androidMinSdk = 24
 versions.androidCompileSdk = 36

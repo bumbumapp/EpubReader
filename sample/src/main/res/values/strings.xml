@@ -3,4 +3,11 @@
     <string name="privacy_options">Privacy options</string>
     <string name="no_file_picker">No file picker app is available</string>
     <string name="cannot_open_book">Could not open this book</string>
+    <!-- 2026 home redesign -->
+    <string name="home_hero_title">Open an EPUB book</string>
+    <string name="home_hero_body">Read with your own font, text size and night mode. Works offline.</string>
+    <string name="home_open_book">Open book</string>
+    <string name="home_books">Your books</string>
+    <string name="home_empty_title">No books yet</string>
+    <string name="home_empty_body">Books you open appear here, so you can pick up where you left off.</string>
 </resources>

@@ -26,7 +26,7 @@ public final class BannerHelper {
         DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
         int widthPx = container.getWidth() > 0 ? container.getWidth() : metrics.widthPixels;
         int widthDp = (int) (widthPx / metrics.density);
-        adView.setAdSize(AdSize.getLargeAnchoredAdaptiveBannerAdSize(activity, widthDp));
+        adView.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(activity, widthDp));
         container.addView(adView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 android.view.Gravity.CENTER_HORIZONTAL));

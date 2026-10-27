@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2026 premium redesign: ink hero, forest-green accent, neutral ground with white cards. -->
+<resources>
+    <color name="brand_ink">#16201C</color>
+    <color name="brand_onInk">#FFFFFF</color>
+    <color name="brand_accent">#1F9D6B</color>
+    <color name="brand_accentContainer">#E3F4EC</color>
+    <color name="brand_ground">#F3F4F6</color>
+    <color name="brand_card">#FFFFFF</color>
+    <color name="brand_text">#111318</color>
+    <color name="brand_textMuted">#5F6470</color>
+</resources>

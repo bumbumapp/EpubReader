@@ -1,99 +1,140 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_centerInParent="true">
+    android:background="@color/brand_ground"
+    android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/toDoEmptyView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <com.airbnb.lottie.LottieAnimationView
-            android:id="@+id/btn_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            app:lottie_autoPlay="true"
-            app:lottie_loop="true"
-            app:lottie_rawRes="@raw/emptybox" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="4dp"
-                android:paddingBottom="8dp"
-                android:text="You didn't open any epub file. Tap above button"
-                android:textColor="@color/grey_40"
-                android:textSize="20sp" />
-
-            <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_margin="5dp"
-                android:src="@drawable/openfil"
-                app:backgroundTint="@android:color/transparent"
-                app:fabSize="mini" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="4dp"
-                android:paddingBottom="8dp"
-                android:text="to open files "
-                android:textColor="@color/grey_40"
-                android:textSize="20sp" />
-
-        </LinearLayout>
-    </LinearLayout>
-
+    <!-- Kept for the privacy-options menu item; the large title below names the screen. -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@android:color/transparent" />
+
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark">
+        android:layout_marginHorizontal="20dp"
+        android:fontFamily="@font/manrope_extrabold"
+        android:letterSpacing="-0.03"
+        android:text="@string/app_name"
+        android:textColor="@color/brand_text"
+        android:textSize="32sp" />
 
-        <TextView
-            android:id="@+id/name"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="10dp"
-            android:gravity="center"
-            android:text="@string/app_name"
-            android:textColor="#ffffff"
-            android:textSize="20sp" />
-
-        <ImageView
-            android:id="@+id/btn_raw"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_gravity="right|center_vertical"
-            android:src="@drawable/openfil" />
-    </androidx.appcompat.widget.Toolbar>
-
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/book_epubs"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_above="@+id/adView"
-        android:layout_below="@id/toolbar"/>
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_hero"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope_bold"
+            android:letterSpacing="-0.02"
+            android:text="@string/home_hero_title"
+            android:textColor="@color/brand_onInk"
+            android:textSize="24sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:alpha="0.75"
+            android:fontFamily="@font/manrope_medium"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/home_hero_body"
+            android:textColor="@color/brand_onInk"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btn_raw"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_pill_accent"
+            android:clickable="true"
+            android:drawableStart="@drawable/ic_open_book"
+            android:drawablePadding="10dp"
+            android:focusable="true"
+            android:fontFamily="@font/manrope_bold"
+            android:gravity="center"
+            android:paddingHorizontal="96dp"
+            android:stateListAnimator="@animator/press_scale"
+            android:text="@string/home_open_book"
+            android:textColor="@color/brand_onInk"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/manrope_semibold"
+        android:text="@string/home_books"
+        android:textColor="@color/brand_textMuted"
+        android:textSize="14sp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/book_epubs"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/toDoEmptyView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="40dp"
+            android:paddingTop="32dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_round12_accent"
+                android:importantForAccessibility="no"
+                android:padding="16dp"
+                android:src="@drawable/epub" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/manrope_bold"
+                android:text="@string/home_empty_title"
+                android:textColor="@color/brand_text"
+                android:textSize="17sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/manrope_medium"
+                android:gravity="center"
+                android:text="@string/home_empty_body"
+                android:textColor="@color/brand_textMuted"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
+
     <FrameLayout
         android:id="@+id/adView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
-
-</RelativeLayout>
+        android:layout_height="wrap_content" />
+</LinearLayout>
