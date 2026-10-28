@@ -7,25 +7,25 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class InterstitialHelperTest {
-    private static final long HOUR = 60 * 60_000L;
+    private static final long MIN = 60_000L;
     private static final long T0 = 1_700_000_000_000L;
 
     @Test
-    public void capIsOneHour() {
-        assertEquals(HOUR, InterstitialHelper.MIN_INTERVAL_MS);
+    public void capConstants() {
+        assertEquals(20 * MIN, InterstitialHelper.MIN_INTERVAL_MS);
+        assertEquals(3 * MIN, InterstitialHelper.FIRST_GRACE_MS);
     }
 
     @Test
-    public void noAdInTheFirstHourAfterInstall() {
-        assertFalse(InterstitialHelper.capAllows(T0 + 59 * 60_000L, 0L, T0));
-        assertTrue(InterstitialHelper.capAllows(T0 + HOUR, 0L, T0));
+    public void noAdRightAfterInstall() {
+        assertFalse(InterstitialHelper.capAllows(T0 + 3 * MIN - 1, 0L, T0));
+        assertTrue(InterstitialHelper.capAllows(T0 + 3 * MIN, 0L, T0));
     }
 
     @Test
-    public void atMostOneAdPerHour() {
-        long shown = T0 + 2 * HOUR;
-        assertFalse(InterstitialHelper.capAllows(shown + 10 * 60_000L, shown, T0));
-        assertFalse(InterstitialHelper.capAllows(shown + 59 * 60_000L, shown, T0));
-        assertTrue(InterstitialHelper.capAllows(shown + HOUR, shown, T0));
+    public void gapBetweenAds() {
+        long shown = T0 + 120 * MIN;
+        assertFalse(InterstitialHelper.capAllows(shown + 20 * MIN - 1, shown, T0));
+        assertTrue(InterstitialHelper.capAllows(shown + 20 * MIN, shown, T0));
     }
 }

@@ -16,15 +16,15 @@ import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 /**
- * Single preloaded interstitial with a strict frequency cap: at most one per hour, and none during the
- * first hour after install (banners are the main ad; frequent full-screen ads make readers uninstall).
- * The cap is stored in SharedPreferences so it survives app restarts. Call {@link #preload(Context)} once ads can be
- * requested and {@link #showIfReady(Activity, Runnable)} at natural break points; {@code next} always runs
- * exactly once (after the ad is dismissed, or immediately if no ad is shown).
+ * Single preloaded interstitial with a frequency cap: at most one per 20 minutes and none in the first
+ * 3 minutes after install (shown when opening a book, contents or settings; never mid-page). The cap is stored in SharedPreferences so it survives restarts.
+ * Call {@link #preload(Context)} once ads can be requested and {@link #showIfReady(Activity, Runnable)} at
+ * natural break points; {@code next} always runs exactly once.
  */
 public final class InterstitialHelper {
 
-    public static final long MIN_INTERVAL_MS = 60 * 60_000L;
+    public static final long MIN_INTERVAL_MS = 20 * 60_000L;
+    public static final long FIRST_GRACE_MS = 3 * 60_000L;
 
     private static final String PREFS = "interstitial_cap";
     private static final String KEY_LAST = "last_shown_ms";
@@ -57,12 +57,9 @@ public final class InterstitialHelper {
                 });
     }
 
-    /**
-     * Pure frequency-cap rule, unit tested: an hour must have passed since the last show, and since the
-     * app was first seen (so a new player never gets a full-screen ad in the first hour).
-     */
+    /** Pure frequency-cap rule, unit tested. */
     static boolean capAllows(long now, long lastShown, long firstSeen) {
-        return now - Math.max(lastShown, firstSeen) >= MIN_INTERVAL_MS;
+        return now - firstSeen >= FIRST_GRACE_MS && now - lastShown >= MIN_INTERVAL_MS;
     }
 
     private static SharedPreferences prefs(Context context) {
