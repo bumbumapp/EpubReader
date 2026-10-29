@@ -10,4 +10,9 @@
     <string name="home_books">Your books</string>
     <string name="home_empty_title">No books yet</string>
     <string name="home_empty_body">Books you open appear here, so you can pick up where you left off.</string>
+    <string name="bento_home_title">Library</string>
+    <string name="bento_hero_subtitle">EPUB, read offline</string>
+    <string name="bento_greeting_morning">Good morning</string>
+    <string name="bento_greeting_afternoon">Good afternoon</string>
+    <string name="bento_greeting_evening">Good evening</string>
 </resources>

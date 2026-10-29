@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:fontFamily="@font/manrope_bold"
+            android:fontFamily="@font/jakarta_bold"
             android:maxLines="2"
             android:textColor="@color/brand_text"
             android:textSize="16sp" />
@@ -42,7 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:fontFamily="@font/manrope_medium"
+            android:fontFamily="@font/jakarta_medium"
             android:maxLines="1"
             android:textColor="@color/brand_textMuted"
             android:textSize="13sp" />

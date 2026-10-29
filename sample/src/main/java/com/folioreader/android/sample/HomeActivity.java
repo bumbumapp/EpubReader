@@ -103,6 +103,10 @@ public class HomeActivity extends AppCompatActivity
         books.setHasFixedSize(true);
         books.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         findViewById(R.id.btn_raw).setOnClickListener(v -> openFiles());
+        int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        ((android.widget.TextView) findViewById(R.id.home_greeting)).setText(hour >= 5 && hour < 12
+                ? R.string.bento_greeting_morning : hour >= 12 && hour < 18
+                ? R.string.bento_greeting_afternoon : R.string.bento_greeting_evening);
 
         refreshList();
 

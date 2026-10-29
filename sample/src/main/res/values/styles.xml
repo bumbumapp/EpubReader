@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
@@ -10,4 +10,12 @@
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
     </style>
 
+    <!-- Bento home: light ground with dark status/navigation icons. -->
+    <style name="AppTheme.BentoHome">
+        <item name="android:statusBarColor">@color/brand_ground</item>
+        <item name="android:navigationBarColor">@color/brand_ground</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowBackground">@color/brand_ground</item>
+    </style>
 </resources>
