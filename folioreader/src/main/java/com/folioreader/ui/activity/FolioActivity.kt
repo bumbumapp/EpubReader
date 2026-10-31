@@ -464,9 +464,11 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
 
     fun startContentHighlightActivity() {
 
+        // The toolbar is usable before the book has finished parsing.
+        val publication = pubBox?.publication ?: return
         val intent = Intent(this@FolioActivity, ContentHighlightActivity::class.java)
 
-        intent.putExtra(Constants.PUBLICATION, pubBox!!.publication)
+        intent.putExtra(Constants.PUBLICATION, publication)
         try {
             intent.putExtra(CHAPTER_SELECTED, spine!![currentChapterIndex].href)
         } catch (e: NullPointerException) {
@@ -604,7 +606,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         Log.v(LOG_TAG, "-> onDirectionChange")
 
         var folioPageFragment: FolioPageFragment? = currentFragment ?: return
-        entryReadLocator = folioPageFragment!!.getLastReadLocator()
+        entryReadLocator = folioPageFragment!!.getLastReadLocator(1500)
         val searchLocatorVisible = folioPageFragment.searchLocatorVisible
 
         direction = newDirection

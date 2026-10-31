@@ -19,6 +19,8 @@ public final class HtmlUtil {
      * @return modified raw html string
      */
     public static String getHtmlContent(Context context, String htmlContent, Config config) {
+        // The chapter HTML arrives asynchronously; a reload can run before it is there.
+        if (htmlContent == null) return "";
 
         String cssPath =
                 String.format(context.getString(R.string.css_tag), "file:///android_asset/css/Style.css");

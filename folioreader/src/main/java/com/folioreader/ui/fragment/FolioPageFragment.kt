@@ -316,6 +316,7 @@ class FolioPageFragment : Fragment(),
                     getString(R.string.html_mime_type)
                 }
 
+            if (mHtmlString == null) return
             uiHandler.post {
                 mWebview!!.loadDataWithBaseURL(
                     mActivityCallback?.streamerUrl + path,
@@ -583,12 +584,18 @@ class FolioPageFragment : Fragment(),
             getLastReadLocator()
     }
 
-    fun getLastReadLocator(): ReadLocator? {
-        Log.v(LOG_TAG, "-> getLastReadLocator -> " + spineItem.href!!)
+    /**
+     * Asks the page for its current CFI. storeLastReadCfi() saves and broadcasts the answer, so
+     * callers that don't need the value right away pass waitMs = 0 and never block the main thread
+     * (the old fixed 5 s wait caused "Input dispatching timed out" ANRs on onStop).
+     */
+    fun getLastReadLocator(waitMs: Long = 0): ReadLocator? {
+        Log.v(LOG_TAG, "-> getLastReadLocator -> " + spineItem.href)
+        val webView = mWebview ?: return lastReadLocator
         try {
             synchronized(this) {
-                mWebview!!.loadUrl(getString(R.string.callComputeLastReadCfi))
-                (this as java.lang.Object).wait(5000)
+                webView.loadUrl(getString(R.string.callComputeLastReadCfi))
+                if (waitMs > 0) (this as java.lang.Object).wait(waitMs)
             }
         } catch (e: InterruptedException) {
             Log.e(LOG_TAG, "-> ", e)
