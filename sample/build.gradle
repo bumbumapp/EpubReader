@@ -15,6 +15,18 @@ android {
         multiDexEnabled true
     }
 
+    // play = Google Play (AdMob + UMP), hms = Huawei AppGallery (Huawei Ads, no Google Mobile Services).
+    // The ad helpers and the hms slot IDs live in :folioreader, which has the same flavors.
+    flavorDimensions = ['store']
+    productFlavors {
+        play {
+            dimension 'store'
+        }
+        hms {
+            dimension 'store'
+        }
+    }
+
     buildTypes {
         debug {
             // Google test ads in debug builds.

@@ -27,6 +27,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://developer.huawei.com/repo/' }
         // R2 streamer/shared (codetoart forks) and NanoHttpd snapshots are only published on JitPack.
         maven {
             url "https://jitpack.io"

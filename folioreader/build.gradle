@@ -1,6 +1,18 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+// Huawei Ads (Petal) slot IDs for the AppGallery build: -PHMS_BANNER_ID=... or a gitignored ads.properties.
+// Until the real slots are set the hms build falls back to Huawei's public test slots.
+// (The ad helpers live in this library, so the hms slot resources are defined here.)
+def hmsAdsProps = new Properties()
+def hmsAdsFile = rootProject.file('ads.properties')
+if (hmsAdsFile.exists()) hmsAdsFile.withInputStream { hmsAdsProps.load(it) }
+def hmsAdId = { String key, String fallback -> ((project.findProperty(key) ?: hmsAdsProps.getProperty(key))?.toString()?.trim()) ?: fallback }
+def HMS_TEST_BANNER_ID = 'testw6vs28auh3'
+def HMS_TEST_INTERSTITIAL_ID = 'testb4znbuh3n2'
+def HMS_BANNER_ID = hmsAdId('HMS_BANNER_ID', HMS_TEST_BANNER_ID)
+def HMS_INTERSTITIAL_ID = hmsAdId('HMS_INTERSTITIAL_ID', HMS_TEST_INTERSTITIAL_ID)
+
 android {
     namespace 'com.folioreader'
     useLibrary 'org.apache.http.legacy'
@@ -11,6 +23,21 @@ android {
         targetSdk versions.androidTargetSdk
         vectorDrawables.useSupportLibrary = true
         consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    // play = Google Play (AdMob + UMP), hms = Huawei AppGallery (Huawei Ads). Matched by name with :sample.
+    flavorDimensions = ['store']
+    productFlavors {
+        play {
+            dimension 'store'
+        }
+        hms {
+            dimension 'store'
+            resValue 'string', 'hms_banner_id', HMS_BANNER_ID
+            resValue 'string', 'hms_interstitial_id', HMS_INTERSTITIAL_ID
+            resValue 'string', 'hms_test_banner_id', HMS_TEST_BANNER_ID
+            resValue 'string', 'hms_test_interstitial_id', HMS_TEST_INTERSTITIAL_ID
+        }
     }
 
     sourceSets {
@@ -39,6 +66,7 @@ android {
     }
     buildFeatures {
         buildConfig true
+        resValues true
     }
 
     lint {
@@ -85,8 +113,9 @@ dependencies {
 
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
 
-    api 'com.google.android.gms:play-services-ads:25.5.0'
-    api 'com.google.android.ump:user-messaging-platform:4.0.0'
+    playApi 'com.google.android.gms:play-services-ads:25.5.0'
+    playApi 'com.google.android.ump:user-messaging-platform:4.0.0'
+    hmsApi 'com.huawei.hms:ads-lite:13.4.91.301'
 }
 
 kotlin {
