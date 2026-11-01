@@ -10,8 +10,8 @@ if (hmsAdsFile.exists()) hmsAdsFile.withInputStream { hmsAdsProps.load(it) }
 def hmsAdId = { String key, String fallback -> ((project.findProperty(key) ?: hmsAdsProps.getProperty(key))?.toString()?.trim()) ?: fallback }
 def HMS_TEST_BANNER_ID = 'testw6vs28auh3'
 def HMS_TEST_INTERSTITIAL_ID = 'testb4znbuh3n2'
-def HMS_BANNER_ID = hmsAdId('HMS_BANNER_ID', HMS_TEST_BANNER_ID)
-def HMS_INTERSTITIAL_ID = hmsAdId('HMS_INTERSTITIAL_ID', HMS_TEST_INTERSTITIAL_ID)
+def HMS_BANNER_ID = hmsAdId('HMS_BANNER_ID', 'v7m5nzors7')
+def HMS_INTERSTITIAL_ID = hmsAdId('HMS_INTERSTITIAL_ID', 's4p3fxlrst')
 
 android {
     namespace 'com.folioreader'
