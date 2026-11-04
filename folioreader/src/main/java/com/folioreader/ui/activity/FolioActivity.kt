@@ -39,6 +39,9 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
+import com.folioreader.stats.Bookmark
+import com.folioreader.stats.ReaderStats
+import com.folioreader.stats.ReadingLog
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -98,6 +101,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
     private var mFolioPageFragmentAdapter: FolioPageFragmentAdapter? = null
     private var entryReadLocator: ReadLocator? = null
     private var lastReadLocator: ReadLocator? = null
+    private var sessionStart = 0L
     private var outState: Bundle? = null
     private var savedInstanceState: Bundle? = null
 
@@ -266,11 +270,58 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         super.onResume()
         Log.v(LOG_TAG, "-> onResume")
         topActivity = true
+        sessionStart = System.currentTimeMillis()
 
         val action = intent.action
         if (action != null && action == FolioReader.ACTION_CLOSE_FOLIOREADER) {
             // FolioActivity is topActivity, so need to broadcast ReadLocator.
             finish()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        recordReadingSession()
+    }
+
+    /** Adds the time this screen was in front to the reading statistics and remembers the position. */
+    private fun recordReadingSession() {
+        val name = bookFileName ?: return
+        if (sessionStart > 0) {
+            ReaderStats.addReadingTime(applicationContext, name, System.currentTimeMillis() - sessionStart)
+            sessionStart = 0
+        }
+        val count = spine?.size ?: 0
+        if (count > 0 && currentChapterIndex >= 0) {
+            ReaderStats.setProgress(
+                applicationContext, name, ReadingLog.chapterProgress(currentChapterIndex, count)
+            )
+        }
+    }
+
+    private fun addBookmarkHere() {
+        val fragment = currentFragment
+        val name = bookFileName
+        if (fragment == null || name == null || spine == null) {
+            Toast.makeText(this, R.string.bookmark_not_ready, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val chapterIndex = currentChapterIndex
+        fragment.requestLocator { locator ->
+            val link = spine?.getOrNull(chapterIndex)
+            val chapterTitle = link?.title?.takeIf { it.isNotBlank() }
+            val b = Bookmark()
+            b.bookKey = ReaderStats.key(name)
+            b.bookTitle = name.removeSuffix(".epub")
+            b.chapter = if (chapterTitle != null) chapterTitle
+                        else getString(R.string.bookmark_chapter_n, chapterIndex + 1)
+            b.progress = ReadingLog.chapterProgress(chapterIndex, spine?.size ?: 0)
+            b.locator = locator.toJson()
+            b.created = System.currentTimeMillis()
+            val added = ReaderStats.addBookmark(applicationContext, b)
+            Toast.makeText(
+                this, if (added) R.string.bookmark_saved else R.string.bookmark_exists, Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -406,6 +457,7 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
         val config = AppUtil.getSavedConfig(applicationContext)!!
         UiUtil.setColorIntToDrawable(config.themeColor, menu.findItem(R.id.itemSearch).icon)
         UiUtil.setColorIntToDrawable(config.themeColor, menu.findItem(R.id.itemConfig).icon)
+        UiUtil.setColorIntToDrawable(config.themeColor, menu.findItem(R.id.itemBookmark).icon)
         UiUtil.setColorIntToDrawable(config.themeColor, menu.findItem(R.id.itemTts).icon)
 
         if (!config.isShowTts)
@@ -440,6 +492,10 @@ class FolioActivity : AppCompatActivity(), FolioActivityCallback, MediaControlle
                 startActivityForResult(intent, RequestCode.SEARCH.value)
                 return true
 
+            }
+            R.id.itemBookmark -> {
+                addBookmarkHere()
+                return true
             }
             R.id.itemConfig -> {
                 InterstitialHelper.showIfReady(this) {

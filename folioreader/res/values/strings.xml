@@ -98,6 +98,11 @@
     <string name="html_mime_type" translatable="false">text/html</string>
 
     <string name="menu_item_search">Search</string>
+    <string name="menu_item_bookmark">Add bookmark</string>
+    <string name="bookmark_saved">Bookmark saved</string>
+    <string name="bookmark_exists">This spot is already bookmarked</string>
+    <string name="bookmark_not_ready">The book is still loading</string>
+    <string name="bookmark_chapter_n">Chapter %1$d</string>
     <string name="menu_item_config">Configuration</string>
     <string name="menu_item_tts">Text To Speech</string>
 

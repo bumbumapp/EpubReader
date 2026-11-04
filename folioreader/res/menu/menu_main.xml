@@ -12,6 +12,13 @@
         tools:showAsAction="always" />
 
     <item
+        android:id="@+id/itemBookmark"
+        android:icon="@drawable/ic_bookmark_add"
+        android:title="@string/menu_item_bookmark"
+        app:showAsAction="ifRoom"
+        tools:showAsAction="always" />
+
+    <item
         android:id="@+id/itemConfig"
         android:icon="@drawable/icon_font"
         android:title="@string/menu_item_config"

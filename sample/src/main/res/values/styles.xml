@@ -18,4 +18,48 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
         <item name="android:windowBackground">@color/brand_ground</item>
     </style>
+
+    <style name="BentoTile">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">14dp</item>
+        <item name="android:background">@drawable/bg_card20</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:stateListAnimator">@animator/press_scale</item>
+    </style>
+    <style name="BentoTileIcon">
+        <item name="android:layout_width">34dp</item>
+        <item name="android:layout_height">34dp</item>
+        <item name="android:background">@drawable/bg_round12_accent</item>
+        <item name="android:padding">7dp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+    <style name="BentoTileTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:fontFamily">@font/jakarta_bold</item>
+        <item name="android:textColor">@color/brand_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:maxLines">1</item>
+    </style>
+    <style name="BentoTileSub">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/jakarta_medium</item>
+        <item name="android:textColor">@color/brand_textMuted</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="StatValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/jakarta_extrabold</item>
+        <item name="android:textColor">@color/brand_text</item>
+        <item name="android:textSize">22sp</item>
+    </style>
 </resources>

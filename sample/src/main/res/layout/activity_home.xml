@@ -12,6 +12,17 @@
         android:layout_height="48dp"
         android:background="@android:color/transparent" />
 
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
     <TextView
         android:id="@+id/home_greeting"
         android:layout_width="wrap_content"
@@ -115,68 +126,195 @@
             android:tint="@color/brand_onInk" />
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="10dp"
-        android:fontFamily="@font/jakarta_bold"
-        android:text="@string/home_books"
-        android:textColor="@color/brand_text"
-        android:textSize="17sp" />
-
-    <FrameLayout
+    <!-- Feature tiles -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/book_epubs"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingHorizontal="16dp"
-            android:paddingBottom="16dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:id="@+id/toDoEmptyView"
+            android:id="@+id/tile_bookmarks"
+            style="@style/BentoTile"
+            android:layout_marginEnd="6dp">
+
+            <ImageView style="@style/BentoTileIcon" android:src="@drawable/ic_bookmark" />
+
+            <TextView style="@style/BentoTileTitle" android:text="@string/tile_bookmarks" />
+
+            <TextView
+                android:id="@+id/tile_bookmarks_sub"
+                style="@style/BentoTileSub" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tile_highlights"
+            style="@style/BentoTile"
+            android:layout_marginHorizontal="6dp">
+
+            <ImageView style="@style/BentoTileIcon" android:src="@drawable/ic_highlight" />
+
+            <TextView style="@style/BentoTileTitle" android:text="@string/tile_highlights" />
+
+            <TextView
+                android:id="@+id/tile_highlights_sub"
+                style="@style/BentoTileSub" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tile_stats"
+            style="@style/BentoTile"
+            android:layout_marginStart="6dp">
+
+            <ImageView style="@style/BentoTileIcon" android:src="@drawable/ic_chart" />
+
+            <TextView style="@style/BentoTileTitle" android:text="@string/tile_stats" />
+
+            <TextView
+                android:id="@+id/tile_stats_sub"
+                style="@style/BentoTileSub" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/jakarta_bold"
+            android:text="@string/home_books"
+            android:textColor="@color/brand_text"
+            android:textSize="17sp" />
+
+    <TextView
+                android:id="@+id/sort_button"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/bg_chip_off"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/jakarta_semibold"
+                android:gravity="center"
+                android:minWidth="48dp"
+                android:paddingHorizontal="14dp"
+                android:textColor="@color/brand_text"
+                android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/library_tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/search_books"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="@drawable/bg_card20"
+            android:drawableStart="@drawable/ic_search_small"
+            android:drawablePadding="10dp"
+            android:fontFamily="@font/jakarta_medium"
+            android:hint="@string/search_books_hint"
+            android:imeOptions="actionSearch"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingHorizontal="14dp"
+            android:textColor="@color/brand_text"
+            android:textColorHint="@color/brand_textMuted"
+            android:textSize="15sp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:paddingHorizontal="40dp"
-            android:paddingTop="32dp"
-            android:visibility="gone">
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:background="@drawable/bg_round12_accent"
-                android:importantForAccessibility="no"
-                android:padding="16dp"
-                android:src="@drawable/epub" />
-
-            <TextView
-                android:layout_width="wrap_content"
+            <HorizontalScrollView
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:fontFamily="@font/jakarta_bold"
-                android:text="@string/home_empty_title"
-                android:textColor="@color/brand_text"
-                android:textSize="17sp" />
+                android:layout_weight="1"
+                android:scrollbars="none">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:fontFamily="@font/jakarta_medium"
-                android:gravity="center"
-                android:text="@string/home_empty_body"
-                android:textColor="@color/brand_textMuted"
-                android:textSize="14sp" />
+                <LinearLayout
+                    android:id="@+id/filter_chips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="8dp" />
+            </HorizontalScrollView>
+
+
         </LinearLayout>
-    </FrameLayout>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/book_epubs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:nestedScrollingEnabled="false"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp" />
+
+    <LinearLayout
+        android:id="@+id/toDoEmptyView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="40dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="32dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/bg_round12_accent"
+            android:importantForAccessibility="no"
+            android:padding="16dp"
+            android:src="@drawable/epub" />
+
+        <TextView
+            android:id="@+id/empty_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/jakarta_bold"
+            android:text="@string/home_empty_title"
+            android:textColor="@color/brand_text"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/empty_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/jakarta_medium"
+            android:gravity="center"
+            android:text="@string/home_empty_body"
+            android:textColor="@color/brand_textMuted"
+            android:textSize="14sp" />
+    </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <FrameLayout
         android:id="@+id/adView"

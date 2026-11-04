@@ -25,6 +25,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.folioreader.Config
 import com.folioreader.FolioReader
 import com.folioreader.R
+import com.folioreader.stats.ReaderStats
 import com.folioreader.mediaoverlay.MediaController
 import com.folioreader.mediaoverlay.MediaControllerCallbacks
 import com.folioreader.model.HighLight
@@ -604,6 +605,15 @@ class FolioPageFragment : Fragment(),
         return lastReadLocator
     }
 
+    private var locatorCallback: ((ReadLocator) -> Unit)? = null
+
+    /** Asks the page for its position and delivers it on the main thread, without blocking. */
+    fun requestLocator(callback: (ReadLocator) -> Unit) {
+        val webView = mWebview ?: return
+        locatorCallback = callback
+        webView.loadUrl(getString(R.string.callComputeLastReadCfi))
+    }
+
     @JavascriptInterface
     fun storeLastReadCfi(cfi: String) {
 
@@ -618,6 +628,19 @@ class FolioPageFragment : Fragment(),
             val intent = Intent(FolioReader.ACTION_SAVE_READ_LOCATOR)
             intent.putExtra(FolioReader.EXTRA_READ_LOCATOR, lastReadLocator as Parcelable?)
             LocalBroadcastManager.getInstance(context!!).sendBroadcast(intent)
+
+            try {
+                ReaderStats.saveLocator(context!!.applicationContext, mBookTitle ?: "", lastReadLocator!!.toJson())
+                ReaderStats.linkBookId(context!!.applicationContext, mBookId, mBookTitle ?: "")
+            } catch (e: RuntimeException) {
+                Log.w(LOG_TAG, "-> saveLocator", e)
+            }
+            val callback = locatorCallback
+            locatorCallback = null
+            if (callback != null) {
+                val locator = lastReadLocator!!
+                android.os.Handler(android.os.Looper.getMainLooper()).post { callback(locator) }
+            }
 
             (this as java.lang.Object).notify()
         }

@@ -229,6 +229,11 @@ class ConfigBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
         colorAnimation.addUpdateListener { animator ->
             val value = animator.animatedValue as Int
+            // The sheet can be dismissed while the fade is still running.
+            if (view == null) {
+                animator.cancel()
+                return@addUpdateListener
+            }
             container.setBackgroundColor(value)
         }
 

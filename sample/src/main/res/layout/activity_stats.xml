@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/brand_ground"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:fontFamily="@font/jakarta_extrabold"
+            android:text="@string/tile_stats"
+            android:textColor="@color/brand_text"
+            android:textSize="24sp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Today vs goal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.85"
+                    android:fontFamily="@font/jakarta_medium"
+                    android:text="@string/stats_today"
+                    android:textColor="@color/brand_onInk"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/stats_today"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/jakarta_extrabold"
+                    android:textColor="@color/brand_onInk"
+                    android:textSize="34sp" />
+
+                <ProgressBar
+                    android:id="@+id/stats_goal_bar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="10dp"
+                    android:max="100"
+                    android:progressDrawable="@drawable/bg_bar_light" />
+
+                <TextView
+                    android:id="@+id/stats_goal_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/jakarta_medium"
+                    android:textColor="@color/brand_onInk"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/stats_goal_change"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_hero_plus"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/jakarta_semibold"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="@string/stats_change_goal"
+                    android:textColor="@color/brand_onInk"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    style="@style/BentoTile"
+                    android:layout_marginEnd="6dp"
+                    android:clickable="false">
+
+                    <TextView
+                        android:id="@+id/stats_streak"
+                        style="@style/StatValue" />
+
+                    <TextView
+                        style="@style/BentoTileSub"
+                        android:text="@string/stats_streak" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/BentoTile"
+                    android:layout_marginHorizontal="6dp"
+                    android:clickable="false">
+
+                    <TextView
+                        android:id="@+id/stats_total"
+                        style="@style/StatValue" />
+
+                    <TextView
+                        style="@style/BentoTileSub"
+                        android:text="@string/stats_total" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/BentoTile"
+                    android:layout_marginStart="6dp"
+                    android:clickable="false">
+
+                    <TextView
+                        android:id="@+id/stats_finished"
+                        style="@style/StatValue" />
+
+                    <TextView
+                        style="@style/BentoTileSub"
+                        android:text="@string/stats_finished" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:fontFamily="@font/jakarta_bold"
+                android:text="@string/stats_week"
+                android:textColor="@color/brand_text"
+                android:textSize="17sp" />
+
+            <com.folioreader.android.sample.WeekBarsView
+                android:id="@+id/stats_week"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_card20"
+                android:padding="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:fontFamily="@font/jakarta_bold"
+                android:text="@string/stats_by_book"
+                android:textColor="@color/brand_text"
+                android:textSize="17sp" />
+
+            <LinearLayout
+                android:id="@+id/stats_books"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_card20"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -113,6 +113,18 @@
             </intent-filter>
 
         </activity>
+        <activity
+            android:name=".BookmarksActivity"
+            android:theme="@style/AppTheme.BentoHome"
+            android:exported="false" />
+        <activity
+            android:name=".HighlightsActivity"
+            android:theme="@style/AppTheme.BentoHome"
+            android:exported="false" />
+        <activity
+            android:name=".StatsActivity"
+            android:theme="@style/AppTheme.BentoHome"
+            android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
